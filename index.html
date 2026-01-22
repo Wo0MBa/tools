@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MrExp0 Tools</title>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --text-main: #e0e0e0;
+            --accent: #4caf50; /* Green for profit/money */
+            --accent-hover: #45a049;
+            --input-bg: #2c2c2c;
+            --border: #333;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--accent);
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            display: gap;
+            gap: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            border: 1px solid var(--border);
+        }
+
+        .card-header {
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .rate-badge {
+            font-size: 0.85rem;
+            background: var(--input-bg);
+            padding: 4px 8px;
+            border-radius: 6px;
+            color: #aaa;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            font-size: 0.85rem;
+            margin-bottom: 5px;
+            color: #aaa;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            box-sizing: border-box;
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input[type="number"]:focus {
+            border-color: var(--accent);
+        }
+
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 1.2rem;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid var(--border);
+            font-weight: bold;
+        }
+        
+        .result-value {
+            color: var(--accent);
+        }
+
+        .refresh-btn {
+            background: none;
+            border: none;
+            color: var(--accent);
+            cursor: pointer;
+            font-size: 0.9rem;
+            text-decoration: underline;
+            padding: 0;
+        }
+
+        /* Адаптив под мобильные */
+        @media (max-width: 600px) {
+            body { padding: 10px; }
+            .card { padding: 15px; }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>MrExp0 Dashboard</h1>
+
+    <div class="container">
+
+        <div class="card">
+            <div class="card-header">
+                TON ⭢ RUB
+                <span id="ton-rate" class="rate-badge">Загрузка...</span>
+            </div>
+            <div class="input-group">
+                <label>Количество TON</label>
+                <input type="number" id="ton-input" placeholder="0" oninput="calcTon()">
+            </div>
+            <div class="result-row">
+                <span>Итог:</span>
+                <span id="ton-result" class="result-value">0 ₽</span>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                USD ⭢ RUB
+                <span id="usd-rate" class="rate-badge">Загрузка...</span>
+            </div>
+            <div class="input-group">
+                <label>Количество USD ($)</label>
+                <input type="number" id="usd-input" placeholder="0" oninput="calcUsd()">
+            </div>
+            <div class="result-row">
+                <span>Итог:</span>
+                <span id="usd-result" class="result-value">0 ₽</span>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">Разница в процентах</div>
+            <div class="input-group">
+                <label>Начальное число (A)</label>
+                <input type="number" id="diff-a" placeholder="Например: 1000" oninput="calcDiff()">
+            </div>
+            <div class="input-group">
+                <label>Конечное число (B)</label>
+                <input type="number" id="diff-b" placeholder="Например: 1200" oninput="calcDiff()">
+            </div>
+            <div class="result-row">
+                <span>Разница:</span>
+                <span id="diff-result" class="result-value">0%</span>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">Чистыми (после комиссий)</div>
+            <div class="input-group">
+                <label>Сумма грязными</label>
+                <input type="number" id="tax-input" placeholder="0" oninput="calcTax()">
+            </div>
+            <div class="result-row" style="font-size: 1rem;">
+                <span>-13%:</span>
+                <span id="tax-13" class="result-value">0</span>
+            </div>
+            <div class="result-row" style="font-size: 1rem; border-top: none; margin-top: 5px; padding-top: 0;">
+                <span>-5%:</span>
+                <span id="tax-5" class="result-value">0</span>
+            </div>
+        </div>
+        
+        <div style="text-align: center; margin-top: 20px;">
+            <button onclick="fetchRates()" class="refresh-btn">Обновить курсы</button>
+        </div>
+
+    </div>
+
+    <script>
+        // Глобальные переменные для курсов
+        let currentTonRate = 0;
+        let currentUsdRate = 0;
+
+        // 1. Функция получения курсов
+        async function fetchRates() {
+            try {
+                // Получаем курс TON (через CoinGecko API)
+                const tonRes = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=the-open-network&vs_currencies=rub');
+                const tonData = await tonRes.json();
+                currentTonRate = tonData['the-open-network'].rub;
+                document.getElementById('ton-rate').innerText = `1 TON = ${currentTonRate} ₽`;
+                calcTon(); // Пересчитать если в поле уже есть цифры
+
+                // Получаем курс USD (через ExchangeRate API)
+                const usdRes = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
+                const usdData = await usdRes.json();
+                currentUsdRate = usdData.rates.RUB;
+                document.getElementById('usd-rate').innerText = `1 USD = ${currentUsdRate} ₽`;
+                calcUsd();
+
+            } catch (error) {
+                console.error("Ошибка API:", error);
+                document.getElementById('ton-rate').innerText = "Ошибка API";
+                document.getElementById('usd-rate').innerText = "Ошибка API";
+            }
+        }
+
+        // 2. Логика калькуляторов
+        function calcTon() {
+            const val = parseFloat(document.getElementById('ton-input').value) || 0;
+            const res = val * currentTonRate;
+            document.getElementById('ton-result').innerText = res.toFixed(2) + ' ₽';
+        }
+
+        function calcUsd() {
+            const val = parseFloat(document.getElementById('usd-input').value) || 0;
+            const res = val * currentUsdRate;
+            document.getElementById('usd-result').innerText = res.toFixed(2) + ' ₽';
+        }
+
+        function calcDiff() {
+            const a = parseFloat(document.getElementById('diff-a').value);
+            const b = parseFloat(document.getElementById('diff-b').value);
+            
+            if (a && b) {
+                // Формула: ((B - A) / A) * 100
+                const diff = ((b - a) / a) * 100;
+                const sign = diff > 0 ? "+" : "";
+                document.getElementById('diff-result').innerText = sign + diff.toFixed(2) + '%';
+                
+                // Меняем цвет в зависимости от плюса или минуса
+                const el = document.getElementById('diff-result');
+                el.style.color = diff >= 0 ? 'var(--accent)' : '#ff5252';
+            } else {
+                document.getElementById('diff-result').innerText = '0%';
+            }
+        }
+
+        function calcTax() {
+            const val = parseFloat(document.getElementById('tax-input').value) || 0;
+            
+            const res13 = val * (1 - 0.13); // Вычет 13%
+            const res5 = val * (1 - 0.05);  // Вычет 5%
+
+            document.getElementById('tax-13').innerText = res13.toFixed(2);
+            document.getElementById('tax-5').innerText = res5.toFixed(2);
+        }
+
+        // Запуск при загрузке страницы
+        fetchRates();
+        // Обновлять каждые 60 секунд
+        setInterval(fetchRates, 60000);
+
+    </script>
+</body>
+</html>
