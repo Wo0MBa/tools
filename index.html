@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MrExp0 Reseller v9</title>
+    <title>MrExp0 Reseller v10</title>
     <style>
         :root {
             --bg-color: #121212;
@@ -38,7 +38,7 @@
             text-align: center;
         }
 
-        /* GRID: 2 колонки */
+        /* GRID */
         .grid-container {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -58,11 +58,11 @@
             position: relative;
         }
 
-        /* Карточка Звезд - на всю ширину */
+        /* КАРТОЧКА ЗВЕЗД - ОСОБЫЙ ДИЗАЙН */
         .card.stars-card {
             grid-column: span 2; 
-            border: 1px solid #554a00;
-            background: linear-gradient(145deg, #1e1e1e 0%, #252200 100%);
+            border: 1px solid #7a6a00;
+            background: linear-gradient(180deg, #1e1e1e 0%, #292606 100%);
         }
 
         .card-header {
@@ -74,7 +74,6 @@
             align-items: center;
         }
 
-        /* Ссылка на фрагмент */
         .fragment-link {
             font-size: 0.9rem;
             color: var(--link-color);
@@ -92,7 +91,7 @@
         }
 
         .input-group { margin-bottom: 15px; }
-
+        
         label {
             display: block;
             font-size: 0.9rem;
@@ -114,7 +113,7 @@
         }
         input[type="number"]:focus { border-color: var(--accent); }
 
-        /* Специальные инпуты для звезд */
+        /* Поля ввода для звезд */
         .stars-inputs-row {
             display: flex;
             gap: 20px;
@@ -124,7 +123,7 @@
             flex: 1;
         }
 
-        /* Таблица цен */
+        /* Таблица */
         .price-table {
             width: 100%;
             border-collapse: collapse;
@@ -134,7 +133,7 @@
         .price-table td {
             padding: 15px;
             border-bottom: 1px solid #444;
-            font-size: 1.2rem;
+            font-size: 1.3rem;
         }
         .price-table tr:last-child td { border-bottom: none; }
         
@@ -148,8 +147,9 @@
             color: #fff; 
             font-weight: bold; 
         }
-        .rub-sign { color: #777; font-size: 0.9rem; }
+        .rub-sign { color: #777; font-size: 1rem; }
 
+        /* Остальные стили */
         .footer-actions {
             grid-column: span 2;
             text-align: center;
@@ -177,7 +177,6 @@
         }
         .result-value { color: var(--accent); }
 
-        /* Адаптив */
         @media (max-width: 768px) {
             .grid-container { grid-template-columns: 1fr; }
             .card.stars-card { grid-column: span 1; }
@@ -193,20 +192,20 @@
 
         <div class="card stars-card"> 
             <div class="card-header">
-                <div>★ Калькулятор Звезд</div>
+                <div>★ Калькулятор</div>
                 <a href="https://fragment.com/stars/buy" target="_blank" class="fragment-link">
-                    Узнать цену (Fragment) ↗
+                    Fragment ↗
                 </a>
             </div>
             
             <div class="stars-inputs-row">
                 <div class="stars-input-block">
-                     <label>1. Курс TON (RUB)</label>
+                     <label>1. Курс TON (в рублях)</label>
                      <input type="number" id="manual-ton-rate" placeholder="Загрузка..." oninput="recalcTable()">
                 </div>
                 <div class="stars-input-block">
                      <label>2. Цена за 50 звезд (в TON)</label>
-                     <input type="number" id="base-price-ton" value="0.14" placeholder="Например 0.14" oninput="recalcTable()">
+                     <input type="number" id="cost-for-50-ton" placeholder="Например 0.48" oninput="recalcTable()">
                 </div>
             </div>
 
@@ -308,25 +307,31 @@
             } catch (e) { console.error(e); }
         }
 
-        // 2. ГЛАВНЫЙ ПЕРЕСЧЕТ
+        // 2. РАСЧЕТ ЗВЕЗД
         function recalcTable() {
-            // 1. Берем курс TON из первого поля
+            // Ввод 1: Какой сейчас курс TON в рублях?
             const tonRate = parseFloat(document.getElementById('manual-ton-rate').value) || 0;
             
-            // 2. Берем цену за ПАК 50 звезд (в TON) из второго поля
-            const packPriceTon = parseFloat(document.getElementById('base-price-ton').value) || 0;
+            // Ввод 2: Сколько TON просят за 50 звезд?
+            const costFor50InTon = parseFloat(document.getElementById('cost-for-50-ton').value) || 0;
 
-            if (!tonRate || !packPriceTon) return;
+            if (!tonRate || !costFor50InTon) {
+                // Если данных нет, пишем нули
+                return; 
+            }
 
-            // Считаем стоимость 1 звезды в рублях по формуле:
-            // (Цена_пака / 50_штук) * Курс_TON
-            const oneStarRub = (packPriceTon / 50) * tonRate;
+            // ЛОГИКА:
+            // 1. Считаем цену 50 звезд в рублях
+            const rubFor50 = costFor50InTon * tonRate;
+
+            // 2. Считаем цену 1 звезды в рублях (для масштабирования)
+            const rubFor1 = rubFor50 / 50;
 
             // Заполняем таблицу
-            document.getElementById('row-50').innerHTML = (oneStarRub * 50).toFixed(2) + ' <span class="rub-sign">₽</span>';
-            document.getElementById('row-75').innerHTML = (oneStarRub * 75).toFixed(2) + ' <span class="rub-sign">₽</span>';
-            document.getElementById('row-85').innerHTML = (oneStarRub * 85).toFixed(2) + ' <span class="rub-sign">₽</span>';
-            document.getElementById('row-100').innerHTML = (oneStarRub * 100).toFixed(2) + ' <span class="rub-sign">₽</span>';
+            document.getElementById('row-50').innerHTML = (rubFor50).toFixed(2) + ' <span class="rub-sign">₽</span>';
+            document.getElementById('row-75').innerHTML = (rubFor1 * 75).toFixed(2) + ' <span class="rub-sign">₽</span>';
+            document.getElementById('row-85').innerHTML = (rubFor1 * 85).toFixed(2) + ' <span class="rub-sign">₽</span>';
+            document.getElementById('row-100').innerHTML = (rubFor1 * 100).toFixed(2) + ' <span class="rub-sign">₽</span>';
         }
 
         // 3. Остальные функции
