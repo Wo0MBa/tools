@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MrExp0 Dashboard v3</title>
+    <title>MrExp0 Dashboard v4</title>
     <style>
         :root {
             --bg-color: #121212;
@@ -24,7 +24,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center; /* Центрируем по вертикали */
+            justify-content: center;
             min-height: 100vh;
         }
 
@@ -38,13 +38,13 @@
             text-shadow: 0 0 10px rgba(76, 175, 80, 0.3);
         }
 
-        /* СЕТКА (GRID) */
+        /* СЕТКА (GRID) 2x2 */
         .grid-container {
             display: grid;
-            grid-template-columns: 1fr 1fr; /* Две равные колонки */
+            grid-template-columns: 1fr 1fr;
             gap: 20px;
             width: 100%;
-            max-width: 900px; /* Ширина под монитор */
+            max-width: 900px;
         }
 
         .card {
@@ -147,9 +147,8 @@
             color: var(--accent);
         }
 
-        /* Кнопка обновления на всю ширину внизу */
         .footer-actions {
-            grid-column: span 2; /* Растянуть на 2 колонки */
+            grid-column: span 2;
             text-align: center;
             margin-top: 10px;
         }
@@ -170,10 +169,10 @@
             border-color: var(--accent);
         }
 
-        /* АДАПТИВНОСТЬ (Мобильные) */
+        /* Адаптив */
         @media (max-width: 768px) {
             .grid-container {
-                grid-template-columns: 1fr; /* Одна колонка на телефоне */
+                grid-template-columns: 1fr;
                 max-width: 500px;
             }
             .footer-actions {
@@ -242,7 +241,7 @@
         </div>
 
         <div class="card">
-            <div class="card-header">Комиссии (13% и 5%)</div>
+            <div class="card-header">Комиссии (13, 10, 5%)</div>
             <div class="input-group">
                 <label>Сумма грязными</label>
                 <input type="number" id="tax-input" placeholder="0" oninput="calcTax()">
@@ -251,6 +250,10 @@
                 <div class="result-row" style="font-size: 1.1rem; padding-top: 10px; margin-top: 5px;">
                     <span>-13%:</span>
                     <span id="tax-13" class="result-value">0</span>
+                </div>
+                <div class="result-row" style="font-size: 1.1rem; border-top: none; margin-top: 5px; padding-top: 0;">
+                    <span>-10%:</span>
+                    <span id="tax-10" class="result-value">0</span>
                 </div>
                 <div class="result-row" style="font-size: 1.1rem; border-top: none; margin-top: 5px; padding-top: 0;">
                     <span>-5%:</span>
@@ -266,12 +269,12 @@
     </div>
 
     <script>
-        // Состояние: false = Прямое (Val -> RUB), true = Обратное (RUB -> Val)
+        // Состояние
         let modeTonReversed = false;
         let modeUsdReversed = false;
         let rates = { ton: 0, usd: 0 };
 
-        // === 1. Получение курсов ===
+        // === 1. API Курсов ===
         async function fetchRates() {
             const tonBadge = document.getElementById('ton-rate');
             const usdBadge = document.getElementById('usd-rate');
@@ -280,7 +283,7 @@
             usdBadge.innerText = 'Загр...';
 
             try {
-                // USD: Надежный CDN JSON
+                // USD (CDN)
                 const usdRes = await fetch('https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json');
                 const usdData = await usdRes.json();
                 rates.usd = usdData.usd.rub;
@@ -292,7 +295,7 @@
             }
 
             try {
-                // TON: CoinGecko
+                // TON (CoinGecko)
                 const tonRes = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=the-open-network&vs_currencies=rub');
                 const tonData = await tonRes.json();
                 rates.ton = tonData['the-open-network'].rub;
@@ -304,7 +307,7 @@
             }
         }
 
-        // === 2. Переключение (Swap) ===
+        // === 2. Переключение режимов ===
         function toggleMode(currency) {
             if (currency === 'ton') {
                 modeTonReversed = !modeTonReversed;
@@ -368,6 +371,7 @@
         function calcTax() {
             const val = parseFloat(document.getElementById('tax-input').value) || 0;
             document.getElementById('tax-13').innerText = (val * 0.87).toFixed(2);
+            document.getElementById('tax-10').innerText = (val * 0.90).toFixed(2); // NEW 10%
             document.getElementById('tax-5').innerText = (val * 0.95).toFixed(2);
         }
 
