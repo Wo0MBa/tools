@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MrExp0 Reseller v10</title>
+    <title>MrExp0 Reseller v10 (Fixed)</title>
     <style>
         :root {
             --bg-color: #121212;
@@ -252,9 +252,9 @@
                 <span>-13%</span> <span>-10%</span> <span>-5%</span>
             </div>
             <div style="display:flex; justify-content:space-between; font-size:1.1rem; color:var(--accent); margin-top:5px;">
-                <span id="tax-13">0</span>
-                <span id="tax-10">0</span>
-                <span id="tax-5">0</span>
+                <span id="tax-13">0.00</span>
+                <span id="tax-10">0.00</span>
+                <span id="tax-5">0.00</span>
             </div>
         </div>
 
@@ -342,9 +342,10 @@
 
         function calcTax() {
             const val = parseFloat(document.getElementById('tax-input').value) || 0;
-            document.getElementById('tax-13').innerText = (val * 0.87).toFixed(0);
-            document.getElementById('tax-10').innerText = (val * 0.90).toFixed(0);
-            document.getElementById('tax-5').innerText = (val * 0.95).toFixed(0);
+            // ИСПРАВЛЕНО: Теперь округляет до 2 знаков после запятой, а не до целого (0)
+            document.getElementById('tax-13').innerText = (val * 0.87).toFixed(2);
+            document.getElementById('tax-10').innerText = (val * 0.90).toFixed(2);
+            document.getElementById('tax-5').innerText = (val * 0.95).toFixed(2);
         }
 
         function calcDiff() {
