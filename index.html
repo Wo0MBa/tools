@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MrExp0 Reseller v10 (Fixed)</title>
+    <title>MrExp0 Reseller v13 (Swap + Fix)</title>
     <style>
         :root {
             --bg-color: #121212;
@@ -72,6 +72,34 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+        }
+
+        /* Новые стили для кнопки свапа */
+        .header-title-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .swap-btn {
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 1.2rem;
+            line-height: 1;
+        }
+        .swap-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            transform: rotate(180deg);
         }
 
         .fragment-link {
@@ -205,7 +233,7 @@
                 </div>
                 <div class="stars-input-block">
                      <label>2. Цена за 50 звезд (в TON)</label>
-                     <input type="number" id="cost-for-50-ton" placeholder="Например 0.48" oninput="recalcTable()">
+                     <input type="number" id="cost-for-50-ton" placeholder="Например 0.14" oninput="recalcTable()">
                 </div>
             </div>
 
@@ -231,7 +259,10 @@
 
         <div class="card">
             <div class="card-header">
-                USD ➔ RUB
+                <div class="header-title-group">
+                    <span id="usd-title">USD ➔ RUB</span>
+                    <button class="swap-btn" onclick="toggleUsdMode()">⇄</button>
+                </div>
                 <span id="usd-rate-badge" style="font-size:0.8rem; color:#777;">...</span>
             </div>
             <div class="input-group">
@@ -280,6 +311,7 @@
         // Глобальные переменные
         let fetchedTonRate = 0;
         let fetchedUsdRate = 0;
+        let modeUsdReversed = false; // Состояние переключателя USD
 
         // 1. Получаем курсы
         async function fetchRates() {
@@ -309,40 +341,57 @@
 
         // 2. РАСЧЕТ ЗВЕЗД
         function recalcTable() {
-            // Ввод 1: Какой сейчас курс TON в рублях?
             const tonRate = parseFloat(document.getElementById('manual-ton-rate').value) || 0;
-            
-            // Ввод 2: Сколько TON просят за 50 звезд?
             const costFor50InTon = parseFloat(document.getElementById('cost-for-50-ton').value) || 0;
 
-            if (!tonRate || !costFor50InTon) {
-                // Если данных нет, пишем нули
-                return; 
-            }
+            if (!tonRate || !costFor50InTon) return;
 
-            // ЛОГИКА:
-            // 1. Считаем цену 50 звезд в рублях
             const rubFor50 = costFor50InTon * tonRate;
-
-            // 2. Считаем цену 1 звезды в рублях (для масштабирования)
             const rubFor1 = rubFor50 / 50;
 
-            // Заполняем таблицу
             document.getElementById('row-50').innerHTML = (rubFor50).toFixed(2) + ' <span class="rub-sign">₽</span>';
             document.getElementById('row-75').innerHTML = (rubFor1 * 75).toFixed(2) + ' <span class="rub-sign">₽</span>';
             document.getElementById('row-85').innerHTML = (rubFor1 * 85).toFixed(2) + ' <span class="rub-sign">₽</span>';
             document.getElementById('row-100').innerHTML = (rubFor1 * 100).toFixed(2) + ' <span class="rub-sign">₽</span>';
         }
 
-        // 3. Остальные функции
-        function calcUsd() {
-            const val = parseFloat(document.getElementById('usd-input').value) || 0;
-            document.getElementById('usd-result').innerText = (val * fetchedUsdRate).toFixed(2) + ' ₽';
+        // 3. USD (с функцией переворота)
+        function toggleUsdMode() {
+            modeUsdReversed = !modeUsdReversed;
+            const title = document.getElementById('usd-title');
+            const input = document.getElementById('usd-input');
+
+            if (modeUsdReversed) {
+                title.innerText = "RUB ➔ USD";
+                input.placeholder = "₽";
+            } else {
+                title.innerText = "USD ➔ RUB";
+                input.placeholder = "$";
+            }
+            calcUsd();
         }
 
+        function calcUsd() {
+            const val = parseFloat(document.getElementById('usd-input').value) || 0;
+            const resEl = document.getElementById('usd-result');
+
+            if (!modeUsdReversed) {
+                // USD -> RUB
+                resEl.innerText = (val * fetchedUsdRate).toFixed(2) + ' ₽';
+            } else {
+                // RUB -> USD
+                if (fetchedUsdRate > 0) {
+                     resEl.innerText = '$ ' + (val / fetchedUsdRate).toFixed(2);
+                } else {
+                     resEl.innerText = "0";
+                }
+            }
+        }
+
+        // 4. КОМИССИИ (С КОПЕЙКАМИ)
         function calcTax() {
             const val = parseFloat(document.getElementById('tax-input').value) || 0;
-            // ИСПРАВЛЕНО: Теперь округляет до 2 знаков после запятой, а не до целого (0)
+            // .toFixed(2) оставляет 2 знака после запятой
             document.getElementById('tax-13').innerText = (val * 0.87).toFixed(2);
             document.getElementById('tax-10').innerText = (val * 0.90).toFixed(2);
             document.getElementById('tax-5').innerText = (val * 0.95).toFixed(2);
