@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MrExp0 Reseller v13 (Swap + Fix)</title>
+    <title>MrExp0 Reseller v15 (Dual Trade)</title>
     <style>
         :root {
             --bg-color: #121212;
@@ -14,6 +14,7 @@
             --input-bg: #2c2c2c;
             --border: #333;
             --link-color: #4da3ff;
+            --loss: #ff5252;
         }
 
         body {
@@ -197,24 +198,38 @@
         .result-row {
             display: flex;
             justify-content: space-between;
-            font-size: 1.3rem;
+            align-items: center;
+            font-size: 1.2rem;
             margin-top: 15px;
             padding-top: 15px;
             border-top: 1px solid var(--border);
             font-weight: bold;
         }
-        .result-value { color: var(--accent); }
+        .result-value { color: var(--accent); min-width: 60px; text-align: right;}
+        
+        /* Стили для мелкого текста под результатом */
+        .sub-result {
+            font-size: 0.85rem;
+            color: #777;
+            font-weight: normal;
+            margin-right: auto;
+            margin-left: 10px;
+        }
+        
+        .badge-5 { color: #4da3ff; font-size: 1rem; }
+        .badge-13 { color: #ff9800; font-size: 1rem; }
 
         @media (max-width: 768px) {
             .grid-container { grid-template-columns: 1fr; }
             .card.stars-card { grid-column: span 1; }
             .stars-inputs-row { flex-direction: column; gap: 15px; }
+            .footer-actions { grid-column: span 1; }
         }
     </style>
 </head>
 <body>
 
-    <h1>MrExp0 Reseller</h1>
+    <h1>MrExp0 Reseller <span style="font-size: 1rem; color: #555;">v15</span></h1>
 
     <div class="grid-container">
 
@@ -301,6 +316,30 @@
             </div>
         </div>
 
+        <div class="card">
+            <div class="card-header" style="color: #fff;">Trade Calc</div>
+            <div class="input-group">
+                <label>Покупка</label>
+                <input type="number" id="trade-buy" placeholder="Купил за..." oninput="calcTrade()">
+            </div>
+            <div class="input-group">
+                <label>Продажа (грязными)</label>
+                <input type="number" id="trade-sell" placeholder="Продал за..." oninput="calcTrade()">
+            </div>
+            
+            <div class="result-row">
+                <span class="badge-5">-5%</span>
+                <span class="sub-result">Чист: <span id="trade-clean-5">0</span></span>
+                <span id="trade-result-5" class="result-value">0%</span>
+            </div>
+
+            <div class="result-row" style="margin-top: 10px; border-top: 1px dashed #333; padding-top: 10px;">
+                <span class="badge-13">-13%</span>
+                <span class="sub-result">Чист: <span id="trade-clean-13">0</span></span>
+                <span id="trade-result-13" class="result-value">0%</span>
+            </div>
+        </div>
+
         <div class="footer-actions">
             <button onclick="fetchRates()" class="refresh-btn">⟳ Обновить курсы</button>
         </div>
@@ -330,7 +369,6 @@
                 const tonData = await tonRes.json();
                 fetchedTonRate = tonData['the-open-network'].rub;
                 
-                // Вставляем курс в поле (только если пустое)
                 const manualInput = document.getElementById('manual-ton-rate');
                 if (!manualInput.value || manualInput.value == 0) {
                     manualInput.value = fetchedTonRate;
@@ -355,7 +393,7 @@
             document.getElementById('row-100').innerHTML = (rubFor1 * 100).toFixed(2) + ' <span class="rub-sign">₽</span>';
         }
 
-        // 3. USD (с функцией переворота)
+        // 3. USD
         function toggleUsdMode() {
             modeUsdReversed = !modeUsdReversed;
             const title = document.getElementById('usd-title');
@@ -376,10 +414,8 @@
             const resEl = document.getElementById('usd-result');
 
             if (!modeUsdReversed) {
-                // USD -> RUB
                 resEl.innerText = (val * fetchedUsdRate).toFixed(2) + ' ₽';
             } else {
-                // RUB -> USD
                 if (fetchedUsdRate > 0) {
                      resEl.innerText = '$ ' + (val / fetchedUsdRate).toFixed(2);
                 } else {
@@ -388,15 +424,15 @@
             }
         }
 
-        // 4. КОМИССИИ (С КОПЕЙКАМИ)
+        // 4. КОМИССИИ
         function calcTax() {
             const val = parseFloat(document.getElementById('tax-input').value) || 0;
-            // .toFixed(2) оставляет 2 знака после запятой
             document.getElementById('tax-13').innerText = (val * 0.87).toFixed(2);
             document.getElementById('tax-10').innerText = (val * 0.90).toFixed(2);
             document.getElementById('tax-5').innerText = (val * 0.95).toFixed(2);
         }
 
+        // 5. РАЗНИЦА %
         function calcDiff() {
             const a = parseFloat(document.getElementById('diff-a').value);
             const b = parseFloat(document.getElementById('diff-b').value);
@@ -405,10 +441,45 @@
                 const sign = diff > 0 ? "+" : "";
                 const el = document.getElementById('diff-result');
                 el.innerText = sign + diff.toFixed(2) + '%';
-                el.style.color = diff >= 0 ? '#4caf50' : '#ff5252';
+                el.style.color = diff >= 0 ? 'var(--accent)' : 'var(--loss)';
             } else {
                 document.getElementById('diff-result').innerText = '0%';
             }
+        }
+
+        // 6. TRADE (5% и 13%)
+        function calcTrade() {
+            const buy = parseFloat(document.getElementById('trade-buy').value);
+            const sell = parseFloat(document.getElementById('trade-sell').value);
+            
+            // Сброс если пусто
+            if (!buy || !sell) {
+                document.getElementById('trade-clean-5').innerText = '0';
+                document.getElementById('trade-result-5').innerText = '0%';
+                document.getElementById('trade-clean-13').innerText = '0';
+                document.getElementById('trade-result-13').innerText = '0%';
+                return;
+            }
+
+            // --- Расчет 5% ---
+            const clean5 = sell * 0.95;
+            const profit5 = clean5 - buy;
+            const percent5 = (profit5 / buy) * 100;
+            
+            document.getElementById('trade-clean-5').innerText = clean5.toFixed(2);
+            const el5 = document.getElementById('trade-result-5');
+            el5.innerText = (percent5 > 0 ? "+" : "") + percent5.toFixed(2) + '%';
+            el5.style.color = percent5 >= 0 ? 'var(--accent)' : 'var(--loss)';
+
+            // --- Расчет 13% ---
+            const clean13 = sell * 0.87;
+            const profit13 = clean13 - buy;
+            const percent13 = (profit13 / buy) * 100;
+
+            document.getElementById('trade-clean-13').innerText = clean13.toFixed(2);
+            const el13 = document.getElementById('trade-result-13');
+            el13.innerText = (percent13 > 0 ? "+" : "") + percent13.toFixed(2) + '%';
+            el13.style.color = percent13 >= 0 ? 'var(--accent)' : 'var(--loss)';
         }
 
         fetchRates();
