@@ -2,8 +2,8 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MrExp0 Reseller v16 (Tabs + Calc)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MrExp0 Reseller v17 (Mobile Fix)</title>
     <style>
         :root {
             --bg-color: #121212;
@@ -20,11 +20,11 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--bg-color);
             color: var(--text-main);
             margin: 0;
-            padding: 20px;
+            padding: 15px; /* Чуть меньше отступы для мобилок */
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -32,10 +32,10 @@
         }
 
         h1 {
-            font-size: 1.8rem;
+            font-size: 1.5rem; /* Чуть компактнее */
             margin-bottom: 20px;
             text-transform: uppercase;
-            letter-spacing: 3px;
+            letter-spacing: 2px;
             color: var(--accent);
             text-align: center;
         }
@@ -44,23 +44,28 @@
         .tabs-nav {
             display: flex;
             background: var(--card-bg);
-            padding: 5px;
+            padding: 4px;
             border-radius: 50px;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
             border: 1px solid var(--border);
             box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 400px;
+            justify-content: space-between;
         }
 
         .tab-btn {
+            flex: 1;
             background: none;
             border: none;
             color: #777;
-            padding: 10px 30px;
-            font-size: 1rem;
+            padding: 12px 0;
+            font-size: 0.95rem;
             cursor: pointer;
             border-radius: 40px;
             transition: all 0.3s;
             font-weight: bold;
+            -webkit-tap-highlight-color: transparent;
         }
 
         .tab-btn.active {
@@ -76,7 +81,7 @@
             animation: fadeIn 0.3s ease-in-out;
         }
         .tab-content.active {
-            display: grid; /* или block, будет переопределено */
+            display: grid; 
         }
 
         @keyframes fadeIn {
@@ -84,25 +89,20 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* === GRID SYSTEM (Reseller Tools) === */
+        /* === GRID SYSTEM === */
         #tab-reseller {
-            display: none; /* скрыт по умолчанию, JS включит */
             grid-template-columns: repeat(2, 1fr);
-            gap: 20px;
-        }
-        #tab-reseller.active {
-            display: grid;
+            gap: 15px;
         }
 
         .card {
             background-color: var(--card-bg);
-            border-radius: 12px;
-            padding: 25px;
+            border-radius: 16px; /* Более скругленные углы */
+            padding: 20px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.3);
             border: 1px solid var(--border);
             display: flex;
             flex-direction: column;
-            position: relative;
         }
 
         .card.stars-card {
@@ -113,48 +113,16 @@
 
         .card-header {
             font-weight: bold;
-            font-size: 1.2rem;
-            margin-bottom: 20px;
+            font-size: 1.1rem;
+            margin-bottom: 15px;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
-        /* Inputs & Buttons */
-        .header-title-group { display: flex; align-items: center; gap: 10px; }
-
-        .swap-btn {
-            background: var(--input-bg);
-            border: 1px solid var(--border);
-            color: var(--text-main);
-            border-radius: 50%;
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-size: 1.2rem;
-            line-height: 1;
-        }
-        .swap-btn:hover { border-color: var(--accent); color: var(--accent); transform: rotate(180deg); }
-
-        .fragment-link {
-            font-size: 0.9rem;
-            color: var(--link-color);
-            text-decoration: none;
-            border: 1px solid var(--border);
-            padding: 6px 12px;
-            border-radius: 6px;
-            background: var(--input-bg);
-            transition: all 0.2s;
-        }
-        .fragment-link:hover { border-color: var(--link-color); color: white; background: #004080; }
-
-        .input-group { margin-bottom: 15px; }
-        
-        label { display: block; font-size: 0.9rem; margin-bottom: 8px; color: #aaa; }
+        /* Inputs */
+        .input-group { margin-bottom: 12px; }
+        label { display: block; font-size: 0.85rem; margin-bottom: 6px; color: #aaa; }
 
         input[type="number"] {
             width: 100%;
@@ -163,15 +131,18 @@
             border: 1px solid var(--border);
             color: white;
             padding: 12px;
-            border-radius: 8px;
-            font-size: 1.2rem;
+            border-radius: 10px;
+            font-size: 1.1rem; /* Размер шрифта 16px+ предотвращает зум на iPhone */
             outline: none;
             transition: border-color 0.2s;
+            -moz-appearance: textfield;
         }
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         input[type="number"]:focus { border-color: var(--accent); }
 
-        /* Stars Table */
-        .stars-inputs-row { display: flex; gap: 20px; margin-bottom: 20px; }
+        /* === ТАБЛИЦА ЗВЕЗД === */
+        .stars-inputs-row { display: flex; gap: 15px; margin-bottom: 15px; }
         .stars-input-block { flex: 1; }
 
         .price-table {
@@ -181,49 +152,56 @@
             border-radius: 8px;
         }
         .price-table td {
-            padding: 10px 15px; /* Чуть меньше паддинг чтобы влезло */
+            padding: 12px 10px;
             border-bottom: 1px solid #444;
             font-size: 1.1rem;
         }
         .price-table tr:last-child td { border-bottom: none; }
-        
         .col-stars { color: var(--accent-stars); font-weight: bold; width: 40%; }
         .col-rub { text-align: right; color: #fff; font-weight: bold; }
-        .rub-sign { color: #777; font-size: 0.9rem; }
 
-        /* Footer & Results */
-        .footer-actions { grid-column: span 2; text-align: center; margin-top: 20px; }
-        .refresh-btn {
-            background: none;
-            border: 1px solid var(--border);
-            color: #777;
-            padding: 10px 20px;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 0.9rem;
+        /* === АДАПТИВНЫЙ БЛОК КОМИССИИ === */
+        .tax-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr); /* 4 колонки на ПК */
+            gap: 10px;
+            margin-top: 10px;
         }
-        .refresh-btn:hover { color: var(--accent); border-color: var(--accent); }
+        .tax-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center; /* Центрируем содержимое */
+        }
+        .tax-label {
+            font-size: 0.8rem;
+            color: #aaa;
+            margin-bottom: 4px;
+            font-weight: bold;
+        }
+        .tax-val {
+            font-size: 1.1rem;
+            color: var(--accent);
+            font-weight: bold;
+        }
 
+        /* === RESULT ROW === */
         .result-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-size: 1.2rem;
-            margin-top: 15px;
-            padding-top: 10px;
+            font-size: 1.1rem;
+            margin-top: 12px;
+            padding-top: 12px;
             border-top: 1px solid var(--border);
             font-weight: bold;
         }
-        .result-value { color: var(--accent); min-width: 60px; text-align: right;}
-        .sub-result { font-size: 0.85rem; color: #777; font-weight: normal; margin-right: auto; margin-left: 10px; }
-        
-        .badge-5 { color: #4da3ff; font-size: 1rem; }
-        .badge-13 { color: #ff9800; font-size: 1rem; }
-        .badge-14 { color: #e91e63; font-size: 1rem; }
+        .result-value { color: var(--accent); text-align: right; }
+        .sub-result { font-size: 0.8rem; color: #777; font-weight: normal; margin-right: auto; margin-left: 10px; }
+        .badge-5 { color: #4da3ff; font-size: 0.9rem; }
+        .badge-13 { color: #ff9800; font-size: 0.9rem; }
 
-        /* === STANDARD CALCULATOR STYLES === */
+        /* === CALCULATOR TAB === */
         #tab-calc {
-            display: none;
             flex-direction: column;
             align-items: center;
         }
@@ -232,71 +210,114 @@
         .calc-body {
             background-color: var(--card-bg);
             border-radius: 20px;
-            padding: 20px;
+            padding: 15px;
             box-shadow: 0 10px 20px rgba(0,0,0,0.5);
             width: 100%;
             max-width: 400px;
             border: 1px solid var(--border);
         }
-
         .calc-screen {
             background: var(--input-bg);
             color: white;
             font-size: 2.5rem;
             text-align: right;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 15px;
             overflow-x: auto;
             border: 1px solid var(--border);
-            height: 80px;
+            height: 70px;
             display: flex;
             align-items: center;
             justify-content: flex-end;
         }
-
         .calc-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             gap: 10px;
         }
-
         .calc-btn {
             background: var(--calc-btn-bg);
             color: white;
             border: none;
-            padding: 20px;
-            font-size: 1.5rem;
+            padding: 15px 0; /* Высота кнопок */
+            font-size: 1.4rem;
             border-radius: 12px;
             cursor: pointer;
-            transition: 0.2s;
+            transition: 0.1s;
             user-select: none;
+            -webkit-tap-highlight-color: transparent;
         }
-        .calc-btn:hover { background: var(--calc-btn-hover); }
-        .calc-btn.op { color: var(--accent); }
+        .calc-btn:active { transform: scale(0.95); }
+        .calc-btn.op { color: var(--accent); font-weight: bold; }
         .calc-btn.eq { background: var(--accent); color: white; grid-column: span 2; }
-        .calc-btn.eq:hover { background: #43a047; }
         .calc-btn.ac { color: #ff5252; }
 
+        /* Кнопка обновления */
+        .footer-actions { grid-column: span 2; text-align: center; margin-top: 20px; width: 100%; }
+        .refresh-btn {
+            background: none;
+            border: 1px solid var(--border);
+            color: #777;
+            padding: 12px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            width: 100%;
+            max-width: 300px;
+        }
+
+        /* Вспомогательные элементы */
+        .header-title-group { display: flex; align-items: center; gap: 10px; }
+        .swap-btn {
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            border-radius: 50%;
+            width: 30px; height: 30px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; font-size: 1rem;
+        }
+        .fragment-link {
+            font-size: 0.8rem;
+            color: var(--link-color);
+            text-decoration: none;
+            border: 1px solid var(--border);
+            padding: 5px 10px;
+            border-radius: 6px;
+            background: var(--input-bg);
+        }
+
+        /* === MOBILE MEDIA QUERY === */
         @media (max-width: 768px) {
-            .grid-container { grid-template-columns: 1fr; }
-            #tab-reseller { grid-template-columns: 1fr; }
+            .grid-container { grid-template-columns: 1fr !important; } /* Принудительно 1 колонка */
             .card.stars-card { grid-column: span 1; }
-            .stars-inputs-row { flex-direction: column; gap: 15px; }
+            .stars-inputs-row { flex-direction: column; gap: 10px; }
             .footer-actions { grid-column: span 1; }
+            
+            /* Адаптация блока комиссий для мобилок */
+            .tax-grid {
+                grid-template-columns: repeat(2, 1fr); /* 2 колонки (2x2) */
+                gap: 15px;
+            }
+            /* Выравниваем элементы внутри плитки */
+            .tax-item:nth-child(1) { align-items: flex-start; } /* 14% слева */
+            .tax-item:nth-child(2) { align-items: flex-end; }   /* 13% справа */
+            .tax-item:nth-child(3) { align-items: flex-start; } /* 10% слева */
+            .tax-item:nth-child(4) { align-items: flex-end; }   /* 5% справа */
         }
     </style>
 </head>
 <body>
 
-    <h1>MrExp0 Reseller <span style="font-size: 1rem; color: #555;">v16</span></h1>
+    <h1>MrExp0 Reseller <span style="font-size: 0.9rem; color: #555;">v17</span></h1>
 
     <nav class="tabs-nav">
         <button class="tab-btn active" onclick="switchTab('reseller')">Инструменты</button>
         <button class="tab-btn" onclick="switchTab('calc')">Калькулятор</button>
     </nav>
 
-    <div id="tab-reseller" class="tab-content active">
+    <div id="tab-reseller" class="tab-content active grid-container">
 
         <div class="card stars-card"> 
             <div class="card-header">
@@ -307,15 +328,15 @@
             <div class="stars-inputs-row">
                 <div class="stars-input-block">
                      <label>1. Курс TON (₽)</label>
-                     <input type="number" id="manual-ton-rate" placeholder="Загрузка..." oninput="recalcTable()">
+                     <input type="number" id="manual-ton-rate" placeholder="..." oninput="recalcTable()">
                 </div>
                 <div class="stars-input-block">
                      <label>2. Цена 50 звезд (TON)</label>
-                     <input type="number" id="cost-for-50-ton" placeholder="Например 0.14" oninput="recalcTable()">
+                     <input type="number" id="cost-for-50-ton" placeholder="..." oninput="recalcTable()">
                 </div>
             </div>
 
-            <div style="max-height: 400px; overflow-y: auto;">
+            <div style="max-height: 350px; overflow-y: auto; -webkit-overflow-scrolling: touch;">
                 <table class="price-table">
                     <tbody id="stars-table-body">
                         </tbody>
@@ -345,13 +366,24 @@
             <div class="input-group">
                 <input type="number" id="tax-input" placeholder="Грязная сумма" oninput="calcTax()">
             </div>
-            <div style="display:flex; justify-content:space-between; margin-top:10px; font-weight:bold; color:#aaa; font-size:0.9rem;">
-                <span>-13%</span> <span>-10%</span> <span>-5%</span>
-            </div>
-            <div style="display:flex; justify-content:space-between; font-size:1.1rem; color:var(--accent); margin-top:5px;">
-                <span id="tax-13">0.00</span>
-                <span id="tax-10">0.00</span>
-                <span id="tax-5">0.00</span>
+            
+            <div class="tax-grid">
+                <div class="tax-item">
+                    <span class="tax-label">-14%</span>
+                    <span id="tax-14" class="tax-val">0.00</span>
+                </div>
+                <div class="tax-item">
+                    <span class="tax-label">-13%</span>
+                    <span id="tax-13" class="tax-val">0.00</span>
+                </div>
+                <div class="tax-item">
+                    <span class="tax-label">-10%</span>
+                    <span id="tax-10" class="tax-val">0.00</span>
+                </div>
+                <div class="tax-item">
+                    <span class="tax-label">-5%</span>
+                    <span id="tax-5" class="tax-val">0.00</span>
+                </div>
             </div>
         </div>
 
@@ -388,12 +420,6 @@
                 <span class="badge-13">-13%</span>
                 <span class="sub-result">Чист: <span id="trade-clean-13">0</span></span>
                 <span id="trade-result-13" class="result-value">0%</span>
-            </div>
-
-             <div class="result-row" style="margin-top: 10px; border-top: 1px dashed #333; padding-top: 10px;">
-                <span class="badge-14">-14%</span>
-                <span class="sub-result">Чист: <span id="trade-clean-14">0</span></span>
-                <span id="trade-result-14" class="result-value">0%</span>
             </div>
         </div>
 
@@ -436,17 +462,20 @@
     <script>
         // === ЛОГИКА ВКЛАДОК ===
         function switchTab(tabName) {
-            // Убираем active у всех кнопок и контента
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
 
-            // Включаем нужное
             if (tabName === 'reseller') {
                 document.querySelector('button[onclick="switchTab(\'reseller\')"]').classList.add('active');
-                document.getElementById('tab-reseller').classList.add('active');
+                const content = document.getElementById('tab-reseller');
+                content.classList.add('active');
+                content.style.display = 'grid'; // Grid для реселлера
             } else {
                 document.querySelector('button[onclick="switchTab(\'calc\')"]').classList.add('active');
-                document.getElementById('tab-calc').classList.add('active');
+                const content = document.getElementById('tab-calc');
+                content.classList.add('active');
+                content.style.display = 'flex'; // Flex для калькулятора
             }
         }
 
@@ -477,12 +506,12 @@
             } catch (e) { console.error(e); }
         }
 
-        // === 2. РАСЧЕТ ЗВЕЗД (Новые тиры) ===
+        // === 2. РАСЧЕТ ЗВЕЗД ===
         function recalcTable() {
             const tonRate = parseFloat(document.getElementById('manual-ton-rate').value) || 0;
             const costFor50InTon = parseFloat(document.getElementById('cost-for-50-ton').value) || 0;
             const tbody = document.getElementById('stars-table-body');
-            tbody.innerHTML = ''; // Очистка
+            tbody.innerHTML = '';
 
             if (!tonRate || !costFor50InTon) {
                 tbody.innerHTML = '<tr><td colspan="2" style="text-align:center">Введите курс</td></tr>';
@@ -491,8 +520,6 @@
 
             const rubFor50 = costFor50InTon * tonRate;
             const rubFor1 = rubFor50 / 50;
-
-            // Массив всех значений звезд
             const starAmounts = [50, 75, 85, 100, 150, 200, 250, 300, 350, 400, 450, 500];
 
             starAmounts.forEach(amount => {
@@ -534,9 +561,10 @@
             }
         }
 
-        // === 4. СПРАВОЧНЫЕ КОМИССИИ ===
+        // === 4. КОМИССИИ (Добавлено 14%) ===
         function calcTax() {
             const val = parseFloat(document.getElementById('tax-input').value) || 0;
+            document.getElementById('tax-14').innerText = (val * 0.86).toFixed(2);
             document.getElementById('tax-13').innerText = (val * 0.87).toFixed(2);
             document.getElementById('tax-10').innerText = (val * 0.90).toFixed(2);
             document.getElementById('tax-5').innerText = (val * 0.95).toFixed(2);
@@ -557,12 +585,11 @@
             }
         }
 
-        // === 6. TRADE CALC (5%, 13%, 14%) ===
+        // === 6. TRADE CALC (5% и 13%) ===
         function calcTrade() {
             const buy = parseFloat(document.getElementById('trade-buy').value);
             const sell = parseFloat(document.getElementById('trade-sell').value);
 
-            // Функция помощник для расчета одной строки
             const doCalc = (commission, idSuffix) => {
                 if (!buy || !sell) {
                     document.getElementById(`trade-clean-${idSuffix}`).innerText = '0';
@@ -582,7 +609,6 @@
 
             doCalc(5, '5');
             doCalc(13, '13');
-            doCalc(14, '14');
         }
 
         // === 7. ОБЫЧНЫЙ КАЛЬКУЛЯТОР ===
@@ -607,11 +633,8 @@
 
         function calcSolve() {
             try {
-                // Защита от дурака (eval безопасен только в локальных тулзах)
-                // Заменяем визуальные символы на JS операторы, если нужно, но у нас они стандартные
                 if (!calcExpression) return;
                 const res = eval(calcExpression); 
-                // Округление до разумных пределов, чтобы не было 0.1+0.2=0.30000004
                 const formatted = parseFloat(res.toFixed(5));
                 screen.innerText = formatted;
                 calcExpression = formatted.toString();
@@ -621,7 +644,6 @@
             }
         }
 
-        // Запуск
         fetchRates();
         setInterval(fetchRates, 60000);
 
