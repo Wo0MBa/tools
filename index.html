@@ -3,488 +3,261 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MrExp0 Reseller v15 (Dual Trade)</title>
+    <title>Универсальный Калькулятор</title>
     <style>
         :root {
-            --bg-color: #121212;
-            --card-bg: #1e1e1e;
-            --text-main: #e0e0e0;
-            --accent: #4caf50;
-            --accent-stars: #FFD700;
-            --input-bg: #2c2c2c;
-            --border: #333;
-            --link-color: #4da3ff;
-            --loss: #ff5252;
+            --primary-color: #0088cc;
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --text-color: #333;
         }
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: var(--bg-color);
-            color: var(--text-main);
+            color: var(--text-color);
             margin: 0;
             padding: 20px;
             display: flex;
-            flex-direction: column;
-            align-items: center;
             justify-content: center;
-            min-height: 100vh;
         }
 
-        h1 {
-            font-size: 1.8rem;
-            margin-bottom: 30px;
-            text-transform: uppercase;
-            letter-spacing: 3px;
-            color: var(--accent);
-            text-align: center;
-        }
-
-        /* GRID */
-        .grid-container {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 20px;
+        .container {
             width: 100%;
-            max-width: 900px;
+            max-width: 500px;
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
         }
 
-        .card {
-            background-color: var(--card-bg);
-            border-radius: 12px;
-            padding: 25px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-            border: 1px solid var(--border);
+        /* Вкладки */
+        .tabs {
             display: flex;
-            flex-direction: column;
-            position: relative;
-        }
-
-        /* КАРТОЧКА ЗВЕЗД - ОСОБЫЙ ДИЗАЙН */
-        .card.stars-card {
-            grid-column: span 2; 
-            border: 1px solid #7a6a00;
-            background: linear-gradient(180deg, #1e1e1e 0%, #292606 100%);
-        }
-
-        .card-header {
-            font-weight: bold;
-            font-size: 1.2rem;
             margin-bottom: 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            border-bottom: 2px solid #eee;
         }
 
-        /* Новые стили для кнопки свапа */
-        .header-title-group {
-            display: flex;
-            align-items: center;
+        .tab-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-weight: bold;
+            color: #888;
+            transition: 0.3s;
+        }
+
+        .tab-btn.active {
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--primary-color);
+        }
+
+        .content { display: none; }
+        .content.active { display: block; }
+
+        /* Стили для торгового калькулятора */
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 16px; /* Предотвращает зум на iOS */
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        th { background-color: #fafafa; font-size: 0.85em; }
+
+        /* Стили для обычного калькулятора */
+        .calc-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
             gap: 10px;
         }
 
-        .swap-btn {
-            background: var(--input-bg);
-            border: 1px solid var(--border);
-            color: var(--text-main);
-            border-radius: 50%;
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-size: 1.2rem;
-            line-height: 1;
-        }
-        .swap-btn:hover {
-            border-color: var(--accent);
-            color: var(--accent);
-            transform: rotate(180deg);
-        }
-
-        .fragment-link {
-            font-size: 0.9rem;
-            color: var(--link-color);
-            text-decoration: none;
-            border: 1px solid var(--border);
-            padding: 6px 12px;
-            border-radius: 6px;
-            background: var(--input-bg);
-            transition: all 0.2s;
-        }
-        .fragment-link:hover {
-            border-color: var(--link-color);
-            color: white;
-            background: #004080;
-        }
-
-        .input-group { margin-bottom: 15px; }
-        
-        label {
-            display: block;
-            font-size: 0.9rem;
-            margin-bottom: 8px;
-            color: #aaa;
-        }
-
-        input[type="number"] {
-            width: 100%;
-            box-sizing: border-box;
-            background: var(--input-bg);
-            border: 1px solid var(--border);
-            color: white;
-            padding: 12px;
+        .calc-display {
+            grid-column: span 4;
+            background: #222;
+            color: #fff;
+            padding: 20px;
+            text-align: right;
+            font-size: 24px;
             border-radius: 8px;
-            font-size: 1.2rem;
-            outline: none;
-            transition: border-color 0.2s;
-        }
-        input[type="number"]:focus { border-color: var(--accent); }
-
-        /* Поля ввода для звезд */
-        .stars-inputs-row {
-            display: flex;
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-        .stars-input-block {
-            flex: 1;
+            margin-bottom: 10px;
+            min-height: 30px;
+            word-wrap: break-word;
         }
 
-        /* Таблица */
-        .price-table {
-            width: 100%;
-            border-collapse: collapse;
-            background: rgba(0,0,0,0.2);
-            border-radius: 8px;
-        }
-        .price-table td {
+        .btn {
             padding: 15px;
-            border-bottom: 1px solid #444;
-            font-size: 1.3rem;
-        }
-        .price-table tr:last-child td { border-bottom: none; }
-        
-        .col-stars { 
-            color: var(--accent-stars); 
-            font-weight: bold; 
-            width: 40%;
-        }
-        .col-rub { 
-            text-align: right; 
-            color: #fff; 
-            font-weight: bold; 
-        }
-        .rub-sign { color: #777; font-size: 1rem; }
-
-        /* Остальные стили */
-        .footer-actions {
-            grid-column: span 2;
-            text-align: center;
-            margin-top: 20px;
-        }
-        .refresh-btn {
-            background: none;
-            border: 1px solid var(--border);
-            color: #777;
-            padding: 10px 20px;
-            border-radius: 20px;
+            border: none;
+            border-radius: 8px;
+            background: #e0e0e0;
+            font-size: 18px;
             cursor: pointer;
-            font-size: 0.9rem;
+            transition: 0.2s;
         }
-        .refresh-btn:hover { color: var(--accent); border-color: var(--accent); }
 
-        .result-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 1.2rem;
-            margin-top: 15px;
-            padding-top: 15px;
-            border-top: 1px solid var(--border);
-            font-weight: bold;
-        }
-        .result-value { color: var(--accent); min-width: 60px; text-align: right;}
-        
-        /* Стили для мелкого текста под результатом */
-        .sub-result {
-            font-size: 0.85rem;
-            color: #777;
-            font-weight: normal;
-            margin-right: auto;
-            margin-left: 10px;
-        }
-        
-        .badge-5 { color: #4da3ff; font-size: 1rem; }
-        .badge-13 { color: #ff9800; font-size: 1rem; }
+        .btn:active { transform: scale(0.95); }
+        .btn.op { background: var(--primary-color); color: white; }
+        .btn.eq { background: #2ecc71; color: white; grid-column: span 2; }
+        .btn.clear { background: #e74c3c; color: white; }
 
-        @media (max-width: 768px) {
-            .grid-container { grid-template-columns: 1fr; }
-            .card.stars-card { grid-column: span 1; }
-            .stars-inputs-row { flex-direction: column; gap: 15px; }
-            .footer-actions { grid-column: span 1; }
+        /* Адаптация */
+        @media (max-width: 400px) {
+            body { padding: 10px; }
+            .container { padding: 15px; }
+            .btn { padding: 12px; font-size: 16px; }
         }
     </style>
 </head>
 <body>
 
-    <h1>MrExp0 Reseller <span style="font-size: 1rem; color: #555;">v15</span></h1>
-
-    <div class="grid-container">
-
-        <div class="card stars-card"> 
-            <div class="card-header">
-                <div>★ Калькулятор</div>
-                <a href="https://fragment.com/stars/buy" target="_blank" class="fragment-link">
-                    Fragment ↗
-                </a>
-            </div>
-            
-            <div class="stars-inputs-row">
-                <div class="stars-input-block">
-                     <label>1. Курс TON (в рублях)</label>
-                     <input type="number" id="manual-ton-rate" placeholder="Загрузка..." oninput="recalcTable()">
-                </div>
-                <div class="stars-input-block">
-                     <label>2. Цена за 50 звезд (в TON)</label>
-                     <input type="number" id="cost-for-50-ton" placeholder="Например 0.14" oninput="recalcTable()">
-                </div>
-            </div>
-
-            <table class="price-table">
-                <tr>
-                    <td class="col-stars">50 звезд</td>
-                    <td class="col-rub" id="row-50">0 <span class="rub-sign">₽</span></td>
-                </tr>
-                <tr>
-                    <td class="col-stars">75 звезд</td>
-                    <td class="col-rub" id="row-75">0 <span class="rub-sign">₽</span></td>
-                </tr>
-                <tr>
-                    <td class="col-stars">85 звезд</td>
-                    <td class="col-rub" id="row-85">0 <span class="rub-sign">₽</span></td>
-                </tr>
-                <tr>
-                    <td class="col-stars">100 звезд</td>
-                    <td class="col-rub" id="row-100">0 <span class="rub-sign">₽</span></td>
-                </tr>
-            </table>
-        </div>
-
-        <div class="card">
-            <div class="card-header">
-                <div class="header-title-group">
-                    <span id="usd-title">USD ➔ RUB</span>
-                    <button class="swap-btn" onclick="toggleUsdMode()">⇄</button>
-                </div>
-                <span id="usd-rate-badge" style="font-size:0.8rem; color:#777;">...</span>
-            </div>
-            <div class="input-group">
-                <input type="number" id="usd-input" placeholder="$" oninput="calcUsd()">
-            </div>
-            <div class="result-row">
-                <span>Итог:</span>
-                <span id="usd-result" class="result-value">0 ₽</span>
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="card-header">Вычет комиссии</div>
-            <div class="input-group">
-                <input type="number" id="tax-input" placeholder="Грязная сумма" oninput="calcTax()">
-            </div>
-            <div style="display:flex; justify-content:space-between; margin-top:10px; font-weight:bold; color:#aaa; font-size:0.9rem;">
-                <span>-13%</span> <span>-10%</span> <span>-5%</span>
-            </div>
-            <div style="display:flex; justify-content:space-between; font-size:1.1rem; color:var(--accent); margin-top:5px;">
-                <span id="tax-13">0.00</span>
-                <span id="tax-10">0.00</span>
-                <span id="tax-5">0.00</span>
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="card-header">Разница %</div>
-            <div style="display: flex; gap: 10px;">
-                <input type="number" id="diff-a" placeholder="Было" oninput="calcDiff()">
-                <input type="number" id="diff-b" placeholder="Стало" oninput="calcDiff()">
-            </div>
-            <div class="result-row">
-                <span>Разница:</span>
-                <span id="diff-result" class="result-value">0%</span>
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="card-header" style="color: #fff;">Trade Calc</div>
-            <div class="input-group">
-                <label>Покупка</label>
-                <input type="number" id="trade-buy" placeholder="Купил за..." oninput="calcTrade()">
-            </div>
-            <div class="input-group">
-                <label>Продажа (грязными)</label>
-                <input type="number" id="trade-sell" placeholder="Продал за..." oninput="calcTrade()">
-            </div>
-            
-            <div class="result-row">
-                <span class="badge-5">-5%</span>
-                <span class="sub-result">Чист: <span id="trade-clean-5">0</span></span>
-                <span id="trade-result-5" class="result-value">0%</span>
-            </div>
-
-            <div class="result-row" style="margin-top: 10px; border-top: 1px dashed #333; padding-top: 10px;">
-                <span class="badge-13">-13%</span>
-                <span class="sub-result">Чист: <span id="trade-clean-13">0</span></span>
-                <span id="trade-result-13" class="result-value">0%</span>
-            </div>
-        </div>
-
-        <div class="footer-actions">
-            <button onclick="fetchRates()" class="refresh-btn">⟳ Обновить курсы</button>
-        </div>
-
+<div class="container">
+    <div class="tabs">
+        <button class="tab-btn active" onclick="openTab('trade-tab')">Звезды (Комиссия 14%)</button>
+        <button class="tab-btn" onclick="openTab('calc-tab')">Калькулятор</button>
     </div>
 
-    <script>
-        // Глобальные переменные
-        let fetchedTonRate = 0;
-        let fetchedUsdRate = 0;
-        let modeUsdReversed = false; // Состояние переключателя USD
+    <div id="trade-tab" class="content active">
+        <div class="input-group">
+            <label>Курс за 1 звезду (₽):</label>
+            <input type="number" id="rate" value="1.5" step="0.01" oninput="calculateStars()">
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Звезды</th>
+                    <th>Сумма (₽)</th>
+                    <th>С вычетом 14%</th>
+                </tr>
+            </thead>
+            <tbody id="stars-body">
+                </tbody>
+        </table>
+    </div>
 
-        // 1. Получаем курсы
-        async function fetchRates() {
-            // USD
-            try {
-                const usdRes = await fetch('https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json');
-                const usdData = await usdRes.json();
-                fetchedUsdRate = usdData.usd.rub;
-                document.getElementById('usd-rate-badge').innerText = `1$ = ${fetchedUsdRate.toFixed(2)}₽`;
-                calcUsd();
-            } catch (e) { console.error(e); }
-
-            // TON
-            try {
-                const tonRes = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=the-open-network&vs_currencies=rub');
-                const tonData = await tonRes.json();
-                fetchedTonRate = tonData['the-open-network'].rub;
-                
-                const manualInput = document.getElementById('manual-ton-rate');
-                if (!manualInput.value || manualInput.value == 0) {
-                    manualInput.value = fetchedTonRate;
-                }
-                recalcTable();
-            } catch (e) { console.error(e); }
-        }
-
-        // 2. РАСЧЕТ ЗВЕЗД
-        function recalcTable() {
-            const tonRate = parseFloat(document.getElementById('manual-ton-rate').value) || 0;
-            const costFor50InTon = parseFloat(document.getElementById('cost-for-50-ton').value) || 0;
-
-            if (!tonRate || !costFor50InTon) return;
-
-            const rubFor50 = costFor50InTon * tonRate;
-            const rubFor1 = rubFor50 / 50;
-
-            document.getElementById('row-50').innerHTML = (rubFor50).toFixed(2) + ' <span class="rub-sign">₽</span>';
-            document.getElementById('row-75').innerHTML = (rubFor1 * 75).toFixed(2) + ' <span class="rub-sign">₽</span>';
-            document.getElementById('row-85').innerHTML = (rubFor1 * 85).toFixed(2) + ' <span class="rub-sign">₽</span>';
-            document.getElementById('row-100').innerHTML = (rubFor1 * 100).toFixed(2) + ' <span class="rub-sign">₽</span>';
-        }
-
-        // 3. USD
-        function toggleUsdMode() {
-            modeUsdReversed = !modeUsdReversed;
-            const title = document.getElementById('usd-title');
-            const input = document.getElementById('usd-input');
-
-            if (modeUsdReversed) {
-                title.innerText = "RUB ➔ USD";
-                input.placeholder = "₽";
-            } else {
-                title.innerText = "USD ➔ RUB";
-                input.placeholder = "$";
-            }
-            calcUsd();
-        }
-
-        function calcUsd() {
-            const val = parseFloat(document.getElementById('usd-input').value) || 0;
-            const resEl = document.getElementById('usd-result');
-
-            if (!modeUsdReversed) {
-                resEl.innerText = (val * fetchedUsdRate).toFixed(2) + ' ₽';
-            } else {
-                if (fetchedUsdRate > 0) {
-                     resEl.innerText = '$ ' + (val / fetchedUsdRate).toFixed(2);
-                } else {
-                     resEl.innerText = "0";
-                }
-            }
-        }
-
-        // 4. КОМИССИИ
-        function calcTax() {
-            const val = parseFloat(document.getElementById('tax-input').value) || 0;
-            document.getElementById('tax-13').innerText = (val * 0.87).toFixed(2);
-            document.getElementById('tax-10').innerText = (val * 0.90).toFixed(2);
-            document.getElementById('tax-5').innerText = (val * 0.95).toFixed(2);
-        }
-
-        // 5. РАЗНИЦА %
-        function calcDiff() {
-            const a = parseFloat(document.getElementById('diff-a').value);
-            const b = parseFloat(document.getElementById('diff-b').value);
-            if (a && b) {
-                const diff = ((b - a) / a) * 100;
-                const sign = diff > 0 ? "+" : "";
-                const el = document.getElementById('diff-result');
-                el.innerText = sign + diff.toFixed(2) + '%';
-                el.style.color = diff >= 0 ? 'var(--accent)' : 'var(--loss)';
-            } else {
-                document.getElementById('diff-result').innerText = '0%';
-            }
-        }
-
-        // 6. TRADE (5% и 13%)
-        function calcTrade() {
-            const buy = parseFloat(document.getElementById('trade-buy').value);
-            const sell = parseFloat(document.getElementById('trade-sell').value);
+    <div id="calc-tab" class="content">
+        <div class="calc-display" id="display">0</div>
+        <div class="calc-grid">
+            <button class="btn clear" onclick="clearCalc()">C</button>
+            <button class="btn" onclick="backspace()">←</button>
+            <button class="btn op" onclick="addToCalc('/')">/</button>
+            <button class="btn op" onclick="addToCalc('*')">×</button>
             
-            // Сброс если пусто
-            if (!buy || !sell) {
-                document.getElementById('trade-clean-5').innerText = '0';
-                document.getElementById('trade-result-5').innerText = '0%';
-                document.getElementById('trade-clean-13').innerText = '0';
-                document.getElementById('trade-result-13').innerText = '0%';
-                return;
-            }
-
-            // --- Расчет 5% ---
-            const clean5 = sell * 0.95;
-            const profit5 = clean5 - buy;
-            const percent5 = (profit5 / buy) * 100;
+            <button class="btn" onclick="addToCalc('7')">7</button>
+            <button class="btn" onclick="addToCalc('8')">8</button>
+            <button class="btn" onclick="addToCalc('9')">9</button>
+            <button class="btn op" onclick="addToCalc('-')">-</button>
             
-            document.getElementById('trade-clean-5').innerText = clean5.toFixed(2);
-            const el5 = document.getElementById('trade-result-5');
-            el5.innerText = (percent5 > 0 ? "+" : "") + percent5.toFixed(2) + '%';
-            el5.style.color = percent5 >= 0 ? 'var(--accent)' : 'var(--loss)';
+            <button class="btn" onclick="addToCalc('4')">4</button>
+            <button class="btn" onclick="addToCalc('5')">5</button>
+            <button class="btn" onclick="addToCalc('6')">6</button>
+            <button class="btn op" onclick="addToCalc('+')">+</button>
+            
+            <button class="btn" onclick="addToCalc('1')">1</button>
+            <button class="btn" onclick="addToCalc('2')">2</button>
+            <button class="btn" onclick="addToCalc('3')">3</button>
+            <button class="btn eq" onclick="finalizeCalc()">=</button>
+            
+            <button class="btn" style="grid-column: span 2" onclick="addToCalc('0')">0</button>
+            <button class="btn" onclick="addToCalc('.')">.</button>
+        </div>
+    </div>
+</div>
 
-            // --- Расчет 13% ---
-            const clean13 = sell * 0.87;
-            const profit13 = clean13 - buy;
-            const percent13 = (profit13 / buy) * 100;
+<script>
+    // Переключение вкладок
+    function openTab(tabId) {
+        document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        event.currentTarget.classList.add('active');
+    }
 
-            document.getElementById('trade-clean-13').innerText = clean13.toFixed(2);
-            const el13 = document.getElementById('trade-result-13');
-            el13.innerText = (percent13 > 0 ? "+" : "") + percent13.toFixed(2) + '%';
-            el13.style.color = percent13 >= 0 ? 'var(--accent)' : 'var(--loss)';
+    // Расчет звезд
+    const starCounts = [50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 1000, 5000];
+    const commission = 0.14;
+
+    function calculateStars() {
+        const rate = parseFloat(document.getElementById('rate').value) || 0;
+        const tbody = document.getElementById('stars-body');
+        tbody.innerHTML = '';
+
+        starCounts.forEach(count => {
+            const rawPrice = count * rate;
+            const finalPrice = rawPrice * (1 - commission);
+            
+            const row = `<tr>
+                <td>${count} ⭐</td>
+                <td>${rawPrice.toFixed(2)} ₽</td>
+                <td style="color: #2ecc71; font-weight: bold;">${finalPrice.toFixed(2)} ₽</td>
+            </tr>`;
+            tbody.innerHTML += row;
+        });
+    }
+
+    // Обычный калькулятор
+    let currentInput = "";
+
+    function addToCalc(val) {
+        if (currentInput === "0" && val !== ".") currentInput = "";
+        currentInput += val;
+        updateDisplay();
+    }
+
+    function clearCalc() {
+        currentInput = "0";
+        updateDisplay();
+    }
+
+    function backspace() {
+        currentInput = currentInput.slice(0, -1);
+        if (currentInput === "") currentInput = "0";
+        updateDisplay();
+    }
+
+    function finalizeCalc() {
+        try {
+            // Используем Function вместо eval для безопасности
+            currentInput = String(new Function('return ' + currentInput)());
+        } catch {
+            currentInput = "Ошибка";
         }
+        updateDisplay();
+    }
 
-        fetchRates();
-        setInterval(fetchRates, 60000);
+    function updateDisplay() {
+        document.getElementById('display').innerText = currentInput;
+    }
 
-    </script>
+    // Инициализация при загрузке
+    calculateStars();
+</script>
+
 </body>
 </html>
