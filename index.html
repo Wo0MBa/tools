@@ -140,20 +140,45 @@
         .stars-inputs-row { display: flex; gap: 15px; margin-bottom: 15px; }
         .stars-input-block { flex: 1; }
 
+        /* Обновленные стили таблицы звезд */
         .price-table {
             width: 100%;
             border-collapse: collapse;
             background: rgba(0,0,0,0.2);
             border-radius: 8px;
         }
-        .price-table td {
-            padding: 12px 10px;
+        .price-table th {
+            padding: 10px 5px;
+            font-size: 0.8rem;
+            color: #aaa;
             border-bottom: 1px solid #444;
-            font-size: 1.1rem;
+            font-weight: normal;
+        }
+        .price-table td {
+            padding: 10px 5px;
+            border-bottom: 1px solid #444;
+            font-size: 0.95rem;
+            vertical-align: middle;
         }
         .price-table tr:last-child td { border-bottom: none; }
-        .col-stars { color: var(--accent-stars); font-weight: bold; width: 40%; }
+        .col-stars { color: var(--accent-stars); font-weight: bold; }
         .col-rub { text-align: right; color: #fff; font-weight: bold; }
+        
+        .sell-input {
+            width: 100%;
+            max-width: 80px;
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            color: white;
+            padding: 8px 4px;
+            border-radius: 6px;
+            text-align: center;
+            font-size: 0.95rem;
+            outline: none;
+        }
+        .sell-input:focus { border-color: var(--accent); }
+        .profit-pos { color: var(--accent); font-weight: bold; }
+        .profit-neg { color: var(--loss); font-weight: bold; }
 
         .tax-grid {
             display: grid;
@@ -298,7 +323,7 @@
 </head>
 <body>
 
-    <h1>MrExp0 Reseller <span style="font-size: 0.9rem; color: #555;">v17</span></h1>
+    <h1>MrExp0 Reseller <span style="font-size: 0.9rem; color: #555;">v17.1</span></h1>
 
     <nav class="tabs-nav">
         <button class="tab-btn active" onclick="switchTab('reseller')">Инструменты</button>
@@ -324,7 +349,7 @@
                 </div>
             </div>
 
-            <div style="max-height: 350px; overflow-y: auto; -webkit-overflow-scrolling: touch;">
+            <div style="max-height: 450px; overflow-y: auto; -webkit-overflow-scrolling: touch;">
                 <table class="price-table">
                     <tbody id="stars-table-body">
                         </tbody>
@@ -475,6 +500,11 @@
         let fetchedTonRate = 0;
         let fetchedUsdRate = 0;
         let modeUsdReversed = false;
+        
+        // Массив с нужными номиналами звезд
+        const starAmounts = [50, 75, 85, 100, 150, 200, 250, 300, 350, 400, 450, 500, 600, 700, 800, 900, 1000];
+        // Хранилище для введенных цен продажи
+        let sellPrices = {};
 
         async function fetchRates() {
             try {
@@ -501,27 +531,83 @@
             const tonRate = parseFloat(document.getElementById('manual-ton-rate').value) || 0;
             const costFor50InTon = parseFloat(document.getElementById('cost-for-50-ton').value) || 0;
             const tbody = document.getElementById('stars-table-body');
-            tbody.innerHTML = '';
 
             if (!tonRate || !costFor50InTon) {
-                tbody.innerHTML = '<tr><td colspan="2" style="text-align:center">Введите курс</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center">Введите курс и цену за 50 звезд</td></tr>';
                 return;
             }
 
             const rubFor50 = costFor50InTon * tonRate;
             const rubFor1 = rubFor50 / 50;
-            const starAmounts = [50, 75, 85, 100, 150, 200, 250, 300, 350, 400, 450, 500];
 
-            starAmounts.forEach(amount => {
-                const cost = (rubFor1 * amount).toFixed(2);
-                const row = `
+            // Если таблица пустая, строим структуру
+            if (tbody.children.length === 0 || tbody.children[0].cells.length !== 4) {
+                tbody.innerHTML = `
                     <tr>
-                        <td class="col-stars">${amount} звезд</td>
-                        <td class="col-rub">${cost} <span class="rub-sign">₽</span></td>
+                        <th style="text-align:left;">Звезды</th>
+                        <th style="text-align:right;">Закуп</th>
+                        <th style="text-align:center;">Продажа ₽</th>
+                        <th style="text-align:right;">Профит</th>
                     </tr>
                 `;
-                tbody.innerHTML += row;
+                starAmounts.forEach(amount => {
+                    const tr = document.createElement('tr');
+                    tr.id = `row-${amount}`;
+                    tr.innerHTML = `
+                        <td class="col-stars">${amount}</td>
+                        <td class="col-rub" id="buy-${amount}">0 ₽</td>
+                        <td style="text-align:center;">
+                            <input type="number" class="sell-input" id="sell-${amount}" value="${sellPrices[amount] || ''}" oninput="calcRowProfit(${amount})" placeholder="...">
+                        </td>
+                        <td style="text-align:right;" id="profit-${amount}">-</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+
+            // Обновляем значения цен без перерисовки всей таблицы (чтобы не сбивался фокус ввода)
+            starAmounts.forEach(amount => {
+                const buyCost = rubFor1 * amount;
+                const buyEl = document.getElementById(`buy-${amount}`);
+                if (buyEl) buyEl.innerHTML = `${buyCost.toFixed(2)} <span style="font-size:0.8rem;font-weight:normal;">₽</span>`;
+                
+                // Пересчитываем профит для строки
+                calcRowProfit(amount, buyCost);
             });
+        }
+
+        function calcRowProfit(amount, forcedBuyCost = null) {
+            const sellInput = document.getElementById(`sell-${amount}`);
+            if(!sellInput) return;
+            
+            const sellVal = sellInput.value;
+            sellPrices[amount] = sellVal; // Сохраняем ввод, чтобы не стерся при автообновлении
+
+            const profitEl = document.getElementById(`profit-${amount}`);
+            if (!sellVal) {
+                profitEl.innerHTML = '-';
+                return;
+            }
+
+            let buyCost = forcedBuyCost;
+            if (buyCost === null) {
+                const tonRate = parseFloat(document.getElementById('manual-ton-rate').value) || 0;
+                const costFor50InTon = parseFloat(document.getElementById('cost-for-50-ton').value) || 0;
+                const rubFor50 = costFor50InTon * tonRate;
+                const rubFor1 = rubFor50 / 50;
+                buyCost = rubFor1 * amount;
+            }
+
+            const sellPrice = parseFloat(sellVal) || 0;
+            // Считаем чистую прибыль: от цены продажи отнимаем 14%
+            const cleanSell = sellPrice * 0.86; 
+            const profitRub = cleanSell - buyCost;
+            const profitPercent = (profitRub / buyCost) * 100;
+
+            const sign = profitPercent > 0 ? '+' : '';
+            const colorClass = profitPercent >= 0 ? 'profit-pos' : 'profit-neg';
+            
+            profitEl.innerHTML = `<span class="${colorClass}">${sign}${profitPercent.toFixed(1)}%</span>`;
         }
 
         function toggleUsdMode() {
