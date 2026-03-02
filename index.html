@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MrExp0 Reseller v17 (Mobile Fix)</title>
+    <title>MrExp0 Reseller v17.1</title>
     <style>
         :root {
             --bg-color: #121212;
@@ -500,9 +500,9 @@
         let fetchedUsdRate = 0;
         let modeUsdReversed = false;
         
-        // Массив с нужными номиналами звезд (ОБНОВЛЕННЫЙ СПИСОК)
-        const starAmounts = [50, 60, 65, 70, 75, 80, 85, 90, 100, 125, 150, 175, 200, 225, 250, 300, 350, 400, 450, 500, 600, 700, 750, 800, 850, 900, 1000, 1200, 1300, 1400, 1500, 2000, 2500, 3000, 4000, 5000];
-        // Хранилище для введенных цен продажи
+        // ОБНОВЛЕННЫЙ СПИСОК: Добавлены 550, 650, 950
+        const starAmounts = [50, 60, 65, 70, 75, 80, 85, 90, 100, 125, 150, 175, 200, 225, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950, 1000, 1200, 1300, 1400, 1500, 2000, 2500, 3000, 4000, 5000];
+        
         let sellPrices = {};
 
         async function fetchRates() {
@@ -539,7 +539,6 @@
             const rubFor50 = costFor50InTon * tonRate;
             const rubFor1 = rubFor50 / 50;
 
-            // Если таблица пустая, строим структуру
             if (tbody.children.length === 0 || tbody.children[0].cells.length !== 4) {
                 tbody.innerHTML = `
                     <tr>
@@ -564,13 +563,10 @@
                 });
             }
 
-            // Обновляем значения цен без перерисовки всей таблицы (чтобы не сбивался фокус ввода)
             starAmounts.forEach(amount => {
                 const buyCost = rubFor1 * amount;
                 const buyEl = document.getElementById(`buy-${amount}`);
                 if (buyEl) buyEl.innerHTML = `${buyCost.toFixed(2)} <span style="font-size:0.8rem;font-weight:normal;">₽</span>`;
-                
-                // Пересчитываем профит для строки
                 calcRowProfit(amount, buyCost);
             });
         }
@@ -580,7 +576,7 @@
             if(!sellInput) return;
             
             const sellVal = sellInput.value;
-            sellPrices[amount] = sellVal; // Сохраняем ввод, чтобы не стерся при автообновлении
+            sellPrices[amount] = sellVal;
 
             const profitEl = document.getElementById(`profit-${amount}`);
             if (!sellVal) {
@@ -598,7 +594,6 @@
             }
 
             const sellPrice = parseFloat(sellVal) || 0;
-            // Считаем чистую прибыль: от цены продажи отнимаем 14%
             const cleanSell = sellPrice * 0.86; 
             const profitRub = cleanSell - buyCost;
             const profitPercent = (profitRub / buyCost) * 100;
