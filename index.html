@@ -3,14 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MrExp0 Reseller v17.4</title>
+    <title>MrExp0 Reseller v17.6</title>
     <style>
         :root {
             --bg-color: #121212;
             --card-bg: #1e1e1e;
             --text-main: #e0e0e0;
             --accent: #4caf50;
+            --warn: #ff9800;
             --accent-stars: #FFD700;
+            --nft-color: #bb86fc;
             --input-bg: #2c2c2c;
             --border: #333;
             --link-color: #4da3ff;
@@ -177,6 +179,7 @@
         }
         .sell-input:focus { border-color: var(--accent); }
         .profit-pos { color: var(--accent); font-weight: bold; }
+        .profit-warn { color: var(--warn); font-weight: bold; }
         .profit-neg { color: var(--loss); font-weight: bold; }
 
         .tax-grid {
@@ -321,7 +324,7 @@
 </head>
 <body>
 
-    <h1>MrExp0 Reseller <span style="font-size: 0.9rem; color: #555;">v17.4</span></h1>
+    <h1>MrExp0 Reseller <span style="font-size: 0.9rem; color: #555;">v17.6</span></h1>
 
     <nav class="tabs-nav">
         <button class="tab-btn active" onclick="switchTab('reseller')">Инструменты</button>
@@ -332,7 +335,7 @@
 
         <div class="card stars-card"> 
             <div class="card-header">
-                <div>★ Калькулятор</div>
+                <div>★ Калькулятор Звезд</div>
                 <a href="https://fragment.com/stars/buy" target="_blank" class="fragment-link">Fragment ↗</a>
             </div>
             
@@ -357,6 +360,27 @@
                     <tbody id="stars-table-body">
                         </tbody>
                 </table>
+            </div>
+        </div>
+
+        <div class="card" style="border-color: var(--nft-color);">
+            <div class="card-header" style="color: var(--nft-color);">
+                🎁 NFT Подарки
+            </div>
+            <div class="input-group">
+                <label>Покупка (TON) <span style="font-size:0.75rem; color:#888; float:right;">+0.3 TON & +0.75$ авто</span></label>
+                <input type="number" id="nft-buy" placeholder="Цена NFT в TON..." oninput="calcNFT()">
+            </div>
+            <div class="input-group">
+                <label>Продажа (₽)</label>
+                <input type="number" id="nft-sell" placeholder="За сколько продаем..." oninput="calcNFT()">
+            </div>
+            
+            <div class="result-row" style="margin-top: 15px;">
+                <span>Итог:</span>
+                <div style="text-align: right;" id="nft-result">
+                    <span style="color: #777; font-size: 0.9rem;">Введите данные</span>
+                </div>
             </div>
         </div>
 
@@ -508,7 +532,6 @@
         let sellPrices = {};
 
         function loadSavedData() {
-            // Загружаем фикс USD
             const savedUsdCost = localStorage.getItem('costFor50Usd');
             if (savedUsdCost) document.getElementById('cost-for-50-usd').value = savedUsdCost;
             
@@ -521,6 +544,13 @@
                     sellPrices = JSON.parse(savedPrices);
                 } catch(e) { console.error(e); }
             }
+
+            // Загрузка для NFT
+            const savedNftBuy = localStorage.getItem('nftBuy');
+            if (savedNftBuy) document.getElementById('nft-buy').value = savedNftBuy;
+
+            const savedNftSell = localStorage.getItem('nftSell');
+            if (savedNftSell) document.getElementById('nft-sell').value = savedNftSell;
         }
 
         function saveAndRecalc() {
@@ -529,6 +559,7 @@
             localStorage.setItem('sellPrices', JSON.stringify(sellPrices));
             
             recalcTable();
+            calcNFT(); // Обновляем и NFT при смене глобальных курсов
         }
 
         async function fetchRates() {
@@ -546,26 +577,86 @@
                 const fetchedTonUsdt = tonData['the-open-network'].usd;
                 
                 const tonInput = document.getElementById('ton-usdt-rate');
-                // Обновляем курс, если он пустой, ИЛИ если мы хотим чтобы он обновлялся "вживую" всегда
-                // Сделаем так: курс всегда тянется актуальный, чтобы расчеты были свежими
                 tonInput.value = fetchedTonUsdt; 
                 
                 saveAndRecalc();
             } catch (e) { console.error(e); }
         }
 
+        // --- ЛОГИКА NFT ПОДАРКОВ ---
+        function calcNFT() {
+            const buyInput = parseFloat(document.getElementById('nft-buy').value);
+            const sellInput = parseFloat(document.getElementById('nft-sell').value);
+
+            localStorage.setItem('nftBuy', document.getElementById('nft-buy').value);
+            localStorage.setItem('nftSell', document.getElementById('nft-sell').value);
+
+            const resEl = document.getElementById('nft-result');
+
+            if (!buyInput || !sellInput) {
+                resEl.innerHTML = '<span style="color: #777; font-size: 0.9rem;">Введите данные</span>';
+                return;
+            }
+
+            const tonUsdtRate = parseFloat(document.getElementById('ton-usdt-rate').value) || 0;
+            const playerokRate = parseFloat(document.getElementById('playerok-rub-usdt').value) || 0;
+
+            if (!tonUsdtRate || !playerokRate) return;
+
+            // Расходы: Голая цена + 0.3 TON + (0.75$ переведенные в TON)
+            const extraTonFromUsd = 0.75 / tonUsdtRate;
+            const totalCostTon = buyInput + 0.3 + extraTonFromUsd;
+
+            // Доходы: Грязные рубли -> Чистые рубли (-10% и -4%) -> USDT -> TON
+            const cleanRub = sellInput * 0.864; 
+            const receivedUsdt = cleanRub / playerokRate;
+            const receivedTon = receivedUsdt / tonUsdtRate;
+
+            // Профит
+            const profitTon = receivedTon - totalCostTon;
+            const profitPercent = (profitTon / totalCostTon) * 100;
+
+            // Б/У для NFT
+            const breakEvenRate = cleanRub / (totalCostTon * tonUsdtRate);
+            
+            // Светофор рисков
+            let margin = breakEvenRate - playerokRate;
+            let colorClass = 'profit-neg'; 
+            let beColor = 'var(--loss)'; 
+            const sign = profitPercent > 0 ? '+' : '';
+
+            if (profitPercent > 0) {
+                if (margin > 2.0) {
+                    colorClass = 'profit-pos'; 
+                    beColor = 'var(--accent)';
+                } else {
+                    colorClass = 'profit-warn'; 
+                    beColor = 'var(--warn)';
+                }
+            }
+
+            let breakEvenHtml = '';
+            if (breakEvenRate > 0 && isFinite(breakEvenRate)) {
+                breakEvenHtml = `<div style="font-size: 0.8rem; color: ${beColor}; margin-top: 4px; line-height: 1;">Б/У: ${breakEvenRate.toFixed(2)}₽</div>`;
+            }
+
+            resEl.innerHTML = `
+                <div class="${colorClass}" style="font-size: 1.2rem; font-weight: bold;">${sign}${profitPercent.toFixed(1)}%</div>
+                ${breakEvenHtml}
+            `;
+        }
+
+        // --- ЛОГИКА ЗВЕЗД ---
         function recalcTable() {
             const costFor50InUsd = parseFloat(document.getElementById('cost-for-50-usd').value) || 0;
             const tonUsdtRate = parseFloat(document.getElementById('ton-usdt-rate').value) || 0;
             const playerokRate = parseFloat(document.getElementById('playerok-rub-usdt').value) || 0;
             
-            // Динамически высчитываем цену 50 звезд в TON
             let costFor50InTon = 0;
             if (costFor50InUsd > 0 && tonUsdtRate > 0) {
                 costFor50InTon = costFor50InUsd / tonUsdtRate;
             }
             
-            // Отображаем расчетный TON под полем ввода
             document.getElementById('auto-ton-cost').innerText = `≈ ${costFor50InTon.toFixed(4)} TON`;
 
             const tbody = document.getElementById('stars-table-body');
@@ -640,21 +731,34 @@
 
             const breakEvenRate = (sellRub * 0.864) / (costInTon * tonUsdtRate);
             
-            let breakEvenHtml = '';
-            if (breakEvenRate > 0 && isFinite(breakEvenRate)) {
-                breakEvenHtml = `<div style="font-size: 0.75rem; color: #888; margin-top: 4px; line-height: 1;">Б/У: ${breakEvenRate.toFixed(2)}₽</div>`;
+            // Логика светофора рисков
+            let margin = breakEvenRate - playerokRate;
+            let colorClass = 'profit-neg'; 
+            let beColor = 'var(--loss)'; 
+            const sign = profitPercent > 0 ? '+' : '';
+
+            if (profitPercent > 0) {
+                if (margin > 2.0) {
+                    colorClass = 'profit-pos'; // Зеленый
+                    beColor = 'var(--accent)';
+                } else {
+                    colorClass = 'profit-warn'; // Оранжевый
+                    beColor = 'var(--warn)';
+                }
             }
 
-            const sign = profitPercent > 0 ? '+' : '';
-            const colorClass = profitPercent >= 0 ? 'profit-pos' : 'profit-neg';
-            
+            let breakEvenHtml = '';
+            if (breakEvenRate > 0 && isFinite(breakEvenRate)) {
+                breakEvenHtml = `<div style="font-size: 0.8rem; color: ${beColor}; margin-top: 4px; line-height: 1;">Б/У: ${breakEvenRate.toFixed(2)}₽</div>`;
+            }
+
             profitEl.innerHTML = `
                 <div class="${colorClass}">${sign}${profitPercent.toFixed(1)}%</div>
                 ${breakEvenHtml}
             `;
         }
 
-        // Остальные функции без изменений
+        // --- УТИЛИТЫ ---
         function toggleUsdMode() {
             modeUsdReversed = !modeUsdReversed;
             const title = document.getElementById('usd-title');
