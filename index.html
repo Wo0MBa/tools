@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MrExp0 Reseller v17.2</title>
+    <title>MrExp0 Reseller v17.4</title>
     <style>
         :root {
             --bg-color: #121212;
@@ -321,7 +321,7 @@
 </head>
 <body>
 
-    <h1>MrExp0 Reseller <span style="font-size: 0.9rem; color: #555;">v17.2</span></h1>
+    <h1>MrExp0 Reseller <span style="font-size: 0.9rem; color: #555;">v17.4</span></h1>
 
     <nav class="tabs-nav">
         <button class="tab-btn active" onclick="switchTab('reseller')">Инструменты</button>
@@ -338,16 +338,17 @@
             
             <div class="stars-inputs-row">
                 <div class="stars-input-block">
-                     <label>1. Цена 50 звезд (TON)</label>
-                     <input type="number" id="cost-for-50-ton" placeholder="..." oninput="recalcTable()">
+                     <label>1. Фикс. цена 50 звезд ($)</label>
+                     <input type="number" id="cost-for-50-usd" placeholder="Например: 0.85" oninput="saveAndRecalc()">
+                     <div id="auto-ton-cost" style="font-size: 0.8rem; color: var(--accent); margin-top: 4px; font-weight: bold;">≈ 0 TON</div>
                 </div>
                 <div class="stars-input-block">
                      <label>2. Курс TON (USDT)</label>
-                     <input type="number" id="ton-usdt-rate" placeholder="..." oninput="recalcTable()">
+                     <input type="number" id="ton-usdt-rate" placeholder="..." oninput="saveAndRecalc()">
                 </div>
                 <div class="stars-input-block" style="min-width: 100%; margin-top: 5px;">
                      <label>3. Курс вывода Playerok (₽ за 1 USDT)</label>
-                     <input type="number" id="playerok-rub-usdt" placeholder="Например: 81.3" value="81.3" oninput="recalcTable()">
+                     <input type="number" id="playerok-rub-usdt" placeholder="Например: 81.3" value="81.3" oninput="saveAndRecalc()">
                 </div>
             </div>
 
@@ -506,6 +507,30 @@
         
         let sellPrices = {};
 
+        function loadSavedData() {
+            // Загружаем фикс USD
+            const savedUsdCost = localStorage.getItem('costFor50Usd');
+            if (savedUsdCost) document.getElementById('cost-for-50-usd').value = savedUsdCost;
+            
+            const savedPlayerok = localStorage.getItem('playerokRate');
+            if (savedPlayerok) document.getElementById('playerok-rub-usdt').value = savedPlayerok;
+
+            const savedPrices = localStorage.getItem('sellPrices');
+            if (savedPrices) {
+                try {
+                    sellPrices = JSON.parse(savedPrices);
+                } catch(e) { console.error(e); }
+            }
+        }
+
+        function saveAndRecalc() {
+            localStorage.setItem('costFor50Usd', document.getElementById('cost-for-50-usd').value);
+            localStorage.setItem('playerokRate', document.getElementById('playerok-rub-usdt').value);
+            localStorage.setItem('sellPrices', JSON.stringify(sellPrices));
+            
+            recalcTable();
+        }
+
         async function fetchRates() {
             try {
                 const usdRes = await fetch('https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json');
@@ -516,27 +541,36 @@
             } catch (e) { console.error(e); }
 
             try {
-                // Тянем курс TON/USD
                 const tonRes = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=the-open-network&vs_currencies=usd');
                 const tonData = await tonRes.json();
                 const fetchedTonUsdt = tonData['the-open-network'].usd;
                 
                 const tonInput = document.getElementById('ton-usdt-rate');
-                if (!tonInput.value || tonInput.value == 0) {
-                    tonInput.value = fetchedTonUsdt;
-                }
-                recalcTable();
+                // Обновляем курс, если он пустой, ИЛИ если мы хотим чтобы он обновлялся "вживую" всегда
+                // Сделаем так: курс всегда тянется актуальный, чтобы расчеты были свежими
+                tonInput.value = fetchedTonUsdt; 
+                
+                saveAndRecalc();
             } catch (e) { console.error(e); }
         }
 
         function recalcTable() {
-            const costFor50InTon = parseFloat(document.getElementById('cost-for-50-ton').value) || 0;
+            const costFor50InUsd = parseFloat(document.getElementById('cost-for-50-usd').value) || 0;
             const tonUsdtRate = parseFloat(document.getElementById('ton-usdt-rate').value) || 0;
             const playerokRate = parseFloat(document.getElementById('playerok-rub-usdt').value) || 0;
             
+            // Динамически высчитываем цену 50 звезд в TON
+            let costFor50InTon = 0;
+            if (costFor50InUsd > 0 && tonUsdtRate > 0) {
+                costFor50InTon = costFor50InUsd / tonUsdtRate;
+            }
+            
+            // Отображаем расчетный TON под полем ввода
+            document.getElementById('auto-ton-cost').innerText = `≈ ${costFor50InTon.toFixed(4)} TON`;
+
             const tbody = document.getElementById('stars-table-body');
 
-            if (!costFor50InTon || !tonUsdtRate || !playerokRate) {
+            if (!costFor50InUsd || !tonUsdtRate || !playerokRate) {
                 tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 20px; color: #aaa;">Введите цены и курсы для расчета</td></tr>';
                 return;
             }
@@ -547,7 +581,7 @@
                         <th style="text-align:left;">Звезды</th>
                         <th style="text-align:right;">Закуп (TON)</th>
                         <th style="text-align:center;">Продажа ₽</th>
-                        <th style="text-align:right;">Профит</th>
+                        <th style="text-align:right;">Профит / БУ</th>
                     </tr>
                 `;
                 starAmounts.forEach(amount => {
@@ -568,7 +602,7 @@
             starAmounts.forEach(amount => {
                 const costInTon = costFor50InTon * (amount / 50);
                 const buyEl = document.getElementById(`buy-${amount}`);
-                if (buyEl) buyEl.innerHTML = `${costInTon.toFixed(2)} <span style="font-size:0.8rem;font-weight:normal;">TON</span>`;
+                if (buyEl) buyEl.innerHTML = `${costInTon.toFixed(3)} <span style="font-size:0.8rem;font-weight:normal;">TON</span>`;
                 calcRowProfit(amount, costInTon);
             });
         }
@@ -579,6 +613,7 @@
             
             const sellVal = sellInput.value;
             sellPrices[amount] = sellVal;
+            localStorage.setItem('sellPrices', JSON.stringify(sellPrices)); 
 
             const profitEl = document.getElementById(`profit-${amount}`);
             if (!sellVal) {
@@ -586,34 +621,44 @@
                 return;
             }
 
-            const costFor50InTon = parseFloat(document.getElementById('cost-for-50-ton').value) || 0;
+            const costFor50InUsd = parseFloat(document.getElementById('cost-for-50-usd').value) || 0;
             const tonUsdtRate = parseFloat(document.getElementById('ton-usdt-rate').value) || 0;
             const playerokRate = parseFloat(document.getElementById('playerok-rub-usdt').value) || 0;
 
             let costInTon = forcedBuyCost;
             if (costInTon === null) {
-                costInTon = costFor50InTon * (amount / 50);
+                costInTon = (costFor50InUsd / tonUsdtRate) * (amount / 50);
             }
 
             const sellRub = parseFloat(sellVal) || 0;
-            const cleanRub = sellRub * 0.864; // Точный остаток после 10% и 4% комиссий
-            const receivedUsdt = cleanRub / playerokRate; // Конвертация в USDT по курсу вывода
-            const receivedTon = receivedUsdt / tonUsdtRate; // Покупка TON
+            const cleanRub = sellRub * 0.864; 
+            const receivedUsdt = cleanRub / playerokRate; 
+            const receivedTon = receivedUsdt / tonUsdtRate; 
             
             const profitTon = receivedTon - costInTon;
             const profitPercent = (profitTon / costInTon) * 100;
 
+            const breakEvenRate = (sellRub * 0.864) / (costInTon * tonUsdtRate);
+            
+            let breakEvenHtml = '';
+            if (breakEvenRate > 0 && isFinite(breakEvenRate)) {
+                breakEvenHtml = `<div style="font-size: 0.75rem; color: #888; margin-top: 4px; line-height: 1;">Б/У: ${breakEvenRate.toFixed(2)}₽</div>`;
+            }
+
             const sign = profitPercent > 0 ? '+' : '';
             const colorClass = profitPercent >= 0 ? 'profit-pos' : 'profit-neg';
             
-            profitEl.innerHTML = `<span class="${colorClass}">${sign}${profitPercent.toFixed(1)}%</span>`;
+            profitEl.innerHTML = `
+                <div class="${colorClass}">${sign}${profitPercent.toFixed(1)}%</div>
+                ${breakEvenHtml}
+            `;
         }
 
+        // Остальные функции без изменений
         function toggleUsdMode() {
             modeUsdReversed = !modeUsdReversed;
             const title = document.getElementById('usd-title');
             const input = document.getElementById('usd-input');
-
             if (modeUsdReversed) {
                 title.innerText = "RUB ➔ USD";
                 input.placeholder = "₽";
@@ -715,6 +760,8 @@
             }
         }
 
+        // Инициализация при старте
+        loadSavedData();
         fetchRates();
         setInterval(fetchRates, 60000);
 
