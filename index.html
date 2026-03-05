@@ -603,8 +603,8 @@
 
             if (!tonUsdtRate || !playerokRate) return;
 
-            // Расходы: Голая цена + 0.3 TON + (0.75$ переведенные в TON)
-            const extraTonFromUsd = 0.75 / tonUsdtRate;
+            // Расходы: Голая цена + 0.3 TON + (0.375$ переведенные в TON)
+            const extraTonFromUsd = 0.375 / tonUsdtRate;
             const totalCostTon = buyInput + 0.3 + extraTonFromUsd;
 
             // Доходы: Грязные рубли -> Чистые рубли (-10% и -4%) -> USDT -> TON
