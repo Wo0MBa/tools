@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MrExp0 Reseller v17.6</title>
+    <title>MrExp0 Reseller v17.7</title>
     <style>
         :root {
             --bg-color: #121212;
@@ -149,16 +149,16 @@
             border-radius: 8px;
         }
         .price-table th {
-            padding: 10px 5px;
-            font-size: 0.8rem;
+            padding: 8px 3px;
+            font-size: 0.75rem;
             color: #aaa;
             border-bottom: 1px solid #444;
             font-weight: normal;
         }
         .price-table td {
-            padding: 10px 5px;
+            padding: 8px 3px;
             border-bottom: 1px solid #444;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             vertical-align: middle;
         }
         .price-table tr:last-child td { border-bottom: none; }
@@ -167,11 +167,11 @@
         
         .sell-input {
             width: 100%;
-            max-width: 80px;
+            max-width: 70px;
             background: var(--input-bg);
             border: 1px solid var(--border);
             color: white;
-            padding: 8px 4px;
+            padding: 6px 4px;
             border-radius: 6px;
             text-align: center;
             font-size: 0.95rem;
@@ -324,7 +324,7 @@
 </head>
 <body>
 
-    <h1>MrExp0 Reseller <span style="font-size: 0.9rem; color: #555;">v17.6</span></h1>
+    <h1>MrExp0 Reseller <span style="font-size: 0.9rem; color: #555;">v17.7</span></h1>
 
     <nav class="tabs-nav">
         <button class="tab-btn active" onclick="switchTab('reseller')">Инструменты</button>
@@ -342,7 +342,7 @@
             <div class="stars-inputs-row">
                 <div class="stars-input-block">
                      <label>1. Фикс. цена 50 звезд ($)</label>
-                     <input type="number" id="cost-for-50-usd" placeholder="Например: 0.85" oninput="saveAndRecalc()">
+                     <input type="number" id="cost-for-50-usd" placeholder="Например: 0.75" oninput="saveAndRecalc()">
                      <div id="auto-ton-cost" style="font-size: 0.8rem; color: var(--accent); margin-top: 4px; font-weight: bold;">≈ 0 TON</div>
                 </div>
                 <div class="stars-input-block">
@@ -532,8 +532,12 @@
         let sellPrices = {};
 
         function loadSavedData() {
-            const savedUsdCost = localStorage.getItem('costFor50Usd');
-            if (savedUsdCost) document.getElementById('cost-for-50-usd').value = savedUsdCost;
+            let savedUsdCost = localStorage.getItem('costFor50Usd');
+            if (!savedUsdCost) {
+                savedUsdCost = '0.75';
+                localStorage.setItem('costFor50Usd', savedUsdCost);
+            }
+            document.getElementById('cost-for-50-usd').value = savedUsdCost;
             
             const savedPlayerok = localStorage.getItem('playerokRate');
             if (savedPlayerok) document.getElementById('playerok-rub-usdt').value = savedPlayerok;
@@ -607,8 +611,8 @@
             const extraTonFromUsd = 0.375 / tonUsdtRate;
             const totalCostTon = buyInput + 0.3 + extraTonFromUsd;
 
-            // Доходы: Грязные рубли -> Чистые рубли (-10% и -4%) -> USDT -> TON
-            const cleanRub = sellInput * 0.864; 
+            // Доходы: Грязные рубли -> Чистые рубли (-14%) -> USDT -> TON
+            const cleanRub = sellInput * 0.86; 
             const receivedUsdt = cleanRub / playerokRate;
             const receivedTon = receivedUsdt / tonUsdtRate;
 
@@ -662,16 +666,17 @@
             const tbody = document.getElementById('stars-table-body');
 
             if (!costFor50InUsd || !tonUsdtRate || !playerokRate) {
-                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 20px; color: #aaa;">Введите цены и курсы для расчета</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px; color: #aaa;">Введите цены и курсы для расчета</td></tr>';
                 return;
             }
 
-            if (tbody.children.length === 0 || tbody.children[0].cells.length !== 4) {
+            if (tbody.children.length === 0 || tbody.children[0].cells.length !== 5) {
                 tbody.innerHTML = `
                     <tr>
-                        <th style="text-align:left;">Звезды</th>
+                        <th style="text-align:left;">Зв.</th>
                         <th style="text-align:right;">Закуп (TON)</th>
-                        <th style="text-align:center;">Продажа ₽</th>
+                        <th style="text-align:center; color: var(--accent);">Рек. 2%</th>
+                        <th style="text-align:center;">Своя (₽)</th>
                         <th style="text-align:right;">Профит / БУ</th>
                     </tr>
                 `;
@@ -681,6 +686,7 @@
                     tr.innerHTML = `
                         <td class="col-stars">${amount}</td>
                         <td class="col-rub" id="buy-${amount}">0 TON</td>
+                        <td style="text-align:center; color: var(--accent); font-weight: bold;" id="rec-${amount}">-</td>
                         <td style="text-align:center;">
                             <input type="number" class="sell-input" id="sell-${amount}" value="${sellPrices[amount] || ''}" oninput="calcRowProfit(${amount})" placeholder="...">
                         </td>
@@ -699,6 +705,25 @@
         }
 
         function calcRowProfit(amount, forcedBuyCost = null) {
+            const costFor50InUsd = parseFloat(document.getElementById('cost-for-50-usd').value) || 0;
+            const tonUsdtRate = parseFloat(document.getElementById('ton-usdt-rate').value) || 0;
+            const playerokRate = parseFloat(document.getElementById('playerok-rub-usdt').value) || 0;
+
+            let costInTon = forcedBuyCost;
+            if (costInTon === null) {
+                costInTon = (costFor50InUsd / tonUsdtRate) * (amount / 50);
+            }
+
+            // Расчет рекомендованной цены (2% профита)
+            const recEl = document.getElementById(`rec-${amount}`);
+            if (recEl && costInTon > 0 && tonUsdtRate > 0 && playerokRate > 0) {
+                // Чтобы получить чистыми 1.02 от стоимости в TON
+                const targetDirtyRub = (costInTon * 1.02 * tonUsdtRate * playerokRate) / 0.86;
+                recEl.innerText = Math.ceil(targetDirtyRub) + ' ₽';
+            } else if (recEl) {
+                recEl.innerText = '-';
+            }
+
             const sellInput = document.getElementById(`sell-${amount}`);
             if(!sellInput) return;
             
@@ -712,24 +737,15 @@
                 return;
             }
 
-            const costFor50InUsd = parseFloat(document.getElementById('cost-for-50-usd').value) || 0;
-            const tonUsdtRate = parseFloat(document.getElementById('ton-usdt-rate').value) || 0;
-            const playerokRate = parseFloat(document.getElementById('playerok-rub-usdt').value) || 0;
-
-            let costInTon = forcedBuyCost;
-            if (costInTon === null) {
-                costInTon = (costFor50InUsd / tonUsdtRate) * (amount / 50);
-            }
-
             const sellRub = parseFloat(sellVal) || 0;
-            const cleanRub = sellRub * 0.864; 
+            const cleanRub = sellRub * 0.86; // 14% комиссия
             const receivedUsdt = cleanRub / playerokRate; 
             const receivedTon = receivedUsdt / tonUsdtRate; 
             
             const profitTon = receivedTon - costInTon;
             const profitPercent = (profitTon / costInTon) * 100;
 
-            const breakEvenRate = (sellRub * 0.864) / (costInTon * tonUsdtRate);
+            const breakEvenRate = (sellRub * 0.86) / (costInTon * tonUsdtRate);
             
             // Логика светофора рисков
             let margin = breakEvenRate - playerokRate;
