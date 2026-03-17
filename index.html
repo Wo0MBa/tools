@@ -13,6 +13,7 @@
             --warn: #ff9800;
             --accent-stars: #FFD700;
             --nft-color: #bb86fc;
+            --po-color: #00bcd4;
             --input-bg: #2c2c2c;
             --border: #333;
             --link-color: #4da3ff;
@@ -450,6 +451,38 @@
             </div>
         </div>
 
+        <div class="card" style="border-color: var(--po-color);">
+            <div class="card-header" style="color: var(--po-color);">
+                🛒 Playerok (TON ➔ ₽)
+            </div>
+            <div class="input-group">
+                <label>Покупка (TON)</label>
+                <input type="number" id="po-buy-ton" placeholder="Сколько потратил TON..." oninput="calcPlayerok()">
+            </div>
+            <div class="input-group">
+                <label>Продажа (₽)</label>
+                <input type="number" id="po-sell-rub" placeholder="За сколько продаем (грязными)..." oninput="calcPlayerok()">
+            </div>
+            
+            <div class="result-row" style="margin-top: 15px; flex-direction: column; align-items: flex-start; gap: 8px;">
+                <div style="display: flex; justify-content: space-between; width: 100%; font-size: 0.9rem;">
+                    <span style="color: #aaa;">Себестоимость:</span>
+                    <span id="po-cost-rub" style="color: #fff;">0 ₽</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; width: 100%; font-size: 0.9rem;">
+                    <span style="color: #aaa;">На руки (-24%):</span>
+                    <span id="po-clean-rub" style="color: var(--accent);">0 ₽</span>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; align-items: flex-end; width: 100%; margin-top: 5px; padding-top: 10px; border-top: 1px dashed #444;">
+                    <span>Прибыль чистыми:</span>
+                    <div style="text-align: right;" id="po-result">
+                        <span style="color: #777; font-size: 0.9rem;">Введите данные</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="card">
             <div class="card-header">
                 <div class="header-title-group">
@@ -624,6 +657,12 @@
 
             const savedNftSell = localStorage.getItem('nftSell');
             if (savedNftSell) document.getElementById('nft-sell').value = savedNftSell;
+
+            const savedPoBuy = localStorage.getItem('poBuyTon');
+            if (savedPoBuy) document.getElementById('po-buy-ton').value = savedPoBuy;
+
+            const savedPoSell = localStorage.getItem('poSellRub');
+            if (savedPoSell) document.getElementById('po-sell-rub').value = savedPoSell;
         }
 
         function saveAndRecalc() {
@@ -635,6 +674,7 @@
             calcCustomStars();
             calcGiftPack();
             calcNFT(); 
+            calcPlayerok();
         }
 
         async function fetchRates() {
@@ -644,6 +684,7 @@
                 fetchedUsdRate = usdData.usd.rub;
                 document.getElementById('usd-rate-badge').innerText = `1$ = ${fetchedUsdRate.toFixed(2)}₽`;
                 calcUsd();
+                calcPlayerok(); // Обновляем данные Playerok при получении курса бакса
             } catch (e) { console.error(e); }
 
             try {
@@ -797,6 +838,52 @@
             resEl.innerHTML = `
                 <div class="${colorClass}" style="font-size: 1.2rem; font-weight: bold;">${sign}${profitPercent.toFixed(1)}%</div>
                 ${breakEvenHtml}
+            `;
+        }
+
+        // --- НОВАЯ ЛОГИКА РАСЧЕТА ДЛЯ PLAYEROK (TON -> RUB) ---
+        function calcPlayerok() {
+            const buyTon = parseFloat(document.getElementById('po-buy-ton').value);
+            const sellRub = parseFloat(document.getElementById('po-sell-rub').value);
+
+            localStorage.setItem('poBuyTon', document.getElementById('po-buy-ton').value);
+            localStorage.setItem('poSellRub', document.getElementById('po-sell-rub').value);
+
+            const resEl = document.getElementById('po-result');
+            const costEl = document.getElementById('po-cost-rub');
+            const cleanEl = document.getElementById('po-clean-rub');
+
+            const tonUsdtRate = parseFloat(document.getElementById('ton-usdt-rate').value) || 0;
+
+            if (!buyTon || !sellRub || !tonUsdtRate || !fetchedUsdRate) {
+                costEl.innerText = '0 ₽';
+                cleanEl.innerText = '0 ₽';
+                resEl.innerHTML = '<span style="color: #777; font-size: 0.9rem;">Введите данные</span>';
+                return;
+            }
+
+            // Перевод затраченных TON в рубли (через актуальный курс биржи)
+            const costRub = buyTon * tonUsdtRate * fetchedUsdRate;
+            costEl.innerText = costRub.toFixed(2) + ' ₽';
+
+            // Чистые рубли после комиссии 24% Playerok
+            const cleanRub = sellRub * 0.76;
+            cleanEl.innerText = cleanRub.toFixed(2) + ' ₽';
+
+            // Чистая прибыль и процент
+            const netProfitRub = cleanRub - costRub;
+            const profitPercent = (netProfitRub / costRub) * 100;
+
+            const colorClass = profitPercent > 0 ? 'profit-pos' : 'profit-neg';
+            const sign = profitPercent > 0 ? '+' : '';
+
+            resEl.innerHTML = `
+                <div style="font-size: 1.1rem; font-weight: bold; margin-bottom: 2px;" class="${colorClass}">
+                    ${sign}${netProfitRub.toFixed(2)} ₽
+                </div>
+                <div class="${colorClass}" style="font-size: 0.95rem;">
+                    (${sign}${profitPercent.toFixed(1)}%)
+                </div>
             `;
         }
 
