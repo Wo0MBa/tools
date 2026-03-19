@@ -326,6 +326,15 @@
             display: flex; align-items: center; justify-content: center;
             cursor: pointer; font-size: 1rem;
         }
+        .fragment-link {
+            font-size: 0.8rem;
+            color: var(--link-color);
+            text-decoration: none;
+            border: 1px solid var(--border);
+            padding: 5px 10px;
+            border-radius: 6px;
+            background: var(--input-bg);
+        }
 
         @media (max-width: 768px) {
             .grid-container { grid-template-columns: 1fr !important; }
@@ -336,6 +345,10 @@
                 grid-template-columns: repeat(2, 1fr);
                 gap: 15px;
             }
+            .tax-item:nth-child(1) { align-items: flex-start; }
+            .tax-item:nth-child(2) { align-items: flex-end; }
+            .tax-item:nth-child(3) { align-items: flex-start; }
+            .tax-item:nth-child(4) { align-items: flex-end; }
         }
     </style>
 </head>
@@ -354,7 +367,9 @@
         <div class="card stars-card"> 
             <div class="card-header">
                 <div>★ Калькулятор Звезд</div>
+                <a href="https://fragment.com/stars/buy" target="_blank" class="fragment-link">Fragment ↗</a>
             </div>
+            
             <div class="stars-inputs-row">
                 <div class="stars-input-block">
                      <label>1. Фикс. цена 50 звезд ($)</label>
@@ -373,8 +388,75 @@
 
             <div style="max-height: 450px; overflow-y: auto; -webkit-overflow-scrolling: touch;">
                 <table class="price-table">
-                    <tbody id="stars-table-body"></tbody>
+                    <tbody id="stars-table-body">
+                    </tbody>
                 </table>
+            </div>
+        </div>
+
+        <div class="card" style="border-color: #4da3ff;">
+            <div class="card-header" style="color: #4da3ff;">
+                ✨ Любое кол-во звезд
+            </div>
+            <div class="input-group">
+                <label>Сколько звезд нужно продать?</label>
+                <input type="number" id="custom-stars-amount" placeholder="Например: 45" oninput="calcCustomStars()">
+            </div>
+            
+            <div class="result-row" style="align-items: flex-end;">
+                <div style="display: flex; flex-direction: column;">
+                    <span style="font-size: 0.8rem; color: #777; margin-bottom: 4px;">Себестоимость:</span>
+                    <span id="custom-cost-ton" style="font-size: 0.95rem; color: #ccc;">0 TON</span>
+                </div>
+                
+                <div style="text-align: right;">
+                    <div style="font-size: 0.8rem; color: var(--accent); margin-bottom: 4px; font-weight: bold;">Ставить цену (+2%):</div>
+                    <span id="custom-stars-rec" class="result-value" style="font-size: 1.4rem;">0 ₽</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card" style="border-color: #ff9800;">
+            <div class="card-header" style="color: #ff9800;">
+                📦 Пакеты подарков
+            </div>
+            
+            <div style="display: flex; gap: 10px; margin-bottom: 12px;">
+                <div class="input-group" style="flex: 1; margin-bottom: 0;">
+                    <label>Цена 1 шт (звезд)</label>
+                    <input type="number" id="gift-star-price" placeholder="Напр: 15" oninput="calcGiftPack()">
+                </div>
+                <div class="input-group" style="flex: 1; margin-bottom: 0;">
+                    <label>Кол-во (шт)</label>
+                    <input type="number" id="gift-quantity" placeholder="Напр: 3" oninput="calcGiftPack()">
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label>За сколько продаем пак (₽)</label>
+                <input type="number" id="gift-sell-price" placeholder="Твоя цена..." oninput="calcGiftPack()">
+            </div>
+            
+            <div class="result-row" style="margin-top: 15px; flex-direction: column; align-items: flex-start; gap: 8px;">
+                <div style="display: flex; justify-content: space-between; width: 100%; font-size: 0.9rem;">
+                    <span style="color: #aaa;">Себестоимость:</span>
+                    <span id="gift-cost" style="color: #fff;">0 TON</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; width: 100%; font-size: 0.9rem;">
+                    <span style="color: #aaa;">Мин. цена (Б/У):</span>
+                    <span id="gift-breakeven" style="color: var(--loss);">0 ₽</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; width: 100%; font-size: 0.9rem;">
+                    <span style="color: #aaa;">Рек. цена (+2%):</span>
+                    <span id="gift-rec" style="color: var(--accent);">0 ₽</span>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; width: 100%; margin-top: 5px; padding-top: 10px; border-top: 1px dashed #444;">
+                    <span>Твой профит:</span>
+                    <div style="text-align: right;" id="gift-result">
+                        <span style="color: #777; font-size: 0.9rem;">Введите цену</span>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -464,6 +546,74 @@
             </div>
         </div>
 
+        <div class="card">
+            <div class="card-header">Вычет комиссии</div>
+            <div class="input-group">
+                <input type="number" id="tax-input" placeholder="Грязная сумма" oninput="calcTax()">
+            </div>
+            
+            <div class="tax-grid">
+                <div class="tax-item">
+                    <span class="tax-label">-14%</span>
+                    <span id="tax-14" class="tax-val">0.00</span>
+                </div>
+                <div class="tax-item">
+                    <span class="tax-label">-13%</span>
+                    <span id="tax-13" class="tax-val">0.00</span>
+                </div>
+                <div class="tax-item">
+                    <span class="tax-label">-10%</span>
+                    <span id="tax-10" class="tax-val">0.00</span>
+                </div>
+                <div class="tax-item">
+                    <span class="tax-label">-5%</span>
+                    <span id="tax-5" class="tax-val">0.00</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">Разница %</div>
+            <div style="display: flex; gap: 10px;">
+                <input type="number" id="diff-a" placeholder="Было" oninput="calcDiff()">
+                <input type="number" id="diff-b" placeholder="Стало" oninput="calcDiff()">
+            </div>
+            <div class="result-row">
+                <span>Разница:</span>
+                <span id="diff-result" class="result-value">0%</span>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header" style="color: #fff;">Trade Calc</div>
+            <div class="input-group">
+                <label>Покупка</label>
+                <input type="number" id="trade-buy" placeholder="Купил за..." oninput="calcTrade()">
+            </div>
+            <div class="input-group">
+                <label>Продажа (грязными)</label>
+                <input type="number" id="trade-sell" placeholder="Продал за..." oninput="calcTrade()">
+            </div>
+            
+            <div class="result-row">
+                <span class="badge-2">-2%</span>
+                <span class="sub-result">Чист: <span id="trade-clean-2">0</span></span>
+                <span id="trade-result-2" class="result-value">0%</span>
+            </div>
+
+            <div class="result-row" style="margin-top: 10px; border-top: 1px dashed #333; padding-top: 10px;">
+                <span class="badge-5">-5%</span>
+                <span class="sub-result">Чист: <span id="trade-clean-5">0</span></span>
+                <span id="trade-result-5" class="result-value">0%</span>
+            </div>
+
+            <div class="result-row" style="margin-top: 10px; border-top: 1px dashed #333; padding-top: 10px;">
+                <span class="badge-13">-13%</span>
+                <span class="sub-result">Чист: <span id="trade-clean-13">0</span></span>
+                <span id="trade-result-13" class="result-value">0%</span>
+            </div>
+        </div>
+
         <div class="footer-actions">
             <button onclick="fetchRates()" class="refresh-btn">⟳ Обновить курсы API</button>
         </div>
@@ -547,7 +697,7 @@
                 document.querySelectorAll('.tab-btn')[1].classList.add('active');
                 const content = document.getElementById('tab-accounting');
                 content.classList.add('active');
-                renderDeals(); // Обновляем таблицу при открытии вкладки
+                renderDeals();
             } else {
                 document.querySelectorAll('.tab-btn')[2].classList.add('active');
                 const content = document.getElementById('tab-calc');
@@ -558,7 +708,8 @@
         let fetchedUsdRate = 0;
         let modeUsdReversed = false;
         
-        const starAmounts = [50, 60, 65, 70, 75, 80, 85, 90, 100, 150, 250, 500, 1000]; // Сократил для примера, вернешь свой полный массив, если нужно
+        // Полный массив звезд
+        const starAmounts = [50, 60, 65, 70, 75, 80, 85, 90, 100, 125, 150, 175, 200, 225, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950, 1000, 1200, 1300, 1400, 1500, 2000, 2500, 3000, 3500, 4000, 4500, 5000, 5500, 6000, 6500, 7000, 7500, 8000, 8500, 9000, 9500, 10000];
         
         let sellPrices = {};
         let bonusPrices = {};
@@ -569,6 +720,16 @@
             
             const savedPlayerok = localStorage.getItem('playerokRate');
             if (savedPlayerok) document.getElementById('playerok-rub-usdt').value = savedPlayerok;
+
+            const savedPrices = localStorage.getItem('sellPrices');
+            if (savedPrices) {
+                try { sellPrices = JSON.parse(savedPrices); } catch(e) { console.error(e); }
+            }
+            
+            const savedBonuses = localStorage.getItem('bonusPrices');
+            if (savedBonuses) {
+                try { bonusPrices = JSON.parse(savedBonuses); } catch(e) { console.error(e); }
+            }
 
             // NFT Восстановление
             document.getElementById('nft-name').value = localStorage.getItem('nftName') || '';
@@ -586,7 +747,11 @@
         function saveAndRecalc() {
             localStorage.setItem('costFor50Usd', document.getElementById('cost-for-50-usd').value);
             localStorage.setItem('playerokRate', document.getElementById('playerok-rub-usdt').value);
+            localStorage.setItem('sellPrices', JSON.stringify(sellPrices));
+            
             recalcTable();
+            calcCustomStars();
+            calcGiftPack();
             calcNFT(); 
             calcPlayerok();
         }
@@ -604,9 +769,94 @@
                 const tonRes = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=the-open-network&vs_currencies=usd');
                 const tonData = await tonRes.json();
                 const fetchedTonUsdt = tonData['the-open-network'].usd;
+                
                 document.getElementById('ton-usdt-rate').value = fetchedTonUsdt; 
                 saveAndRecalc();
             } catch (e) { console.error(e); }
+        }
+
+        // --- ЛОГИКА КАСТОМНЫХ ЗВЕЗД ---
+        function calcCustomStars() {
+            const amount = parseFloat(document.getElementById('custom-stars-amount').value);
+            const costFor50InUsd = parseFloat(document.getElementById('cost-for-50-usd').value) || 0;
+            const tonUsdtRate = parseFloat(document.getElementById('ton-usdt-rate').value) || 0;
+            const playerokRate = parseFloat(document.getElementById('playerok-rub-usdt').value) || 0;
+
+            const recEl = document.getElementById('custom-stars-rec');
+            const costEl = document.getElementById('custom-cost-ton');
+
+            if (!amount || !costFor50InUsd || !tonUsdtRate || !playerokRate) {
+                recEl.innerText = '0 ₽';
+                costEl.innerText = '0 TON';
+                return;
+            }
+
+            const costInUsd = (costFor50InUsd / 50) * amount;
+            const costInTon = costInUsd / tonUsdtRate;
+            costEl.innerText = `≈ ${costInTon.toFixed(3)} TON`;
+
+            const recDirtyRub = (costInUsd * 1.02 * playerokRate) / 0.86;
+            recEl.innerText = `${Math.ceil(recDirtyRub)} ₽`;
+        }
+
+        // --- ЛОГИКА ПАКЕТОВ ПОДАРКОВ ---
+        function calcGiftPack() {
+            const starPrice = parseFloat(document.getElementById('gift-star-price').value);
+            const quantity = parseFloat(document.getElementById('gift-quantity').value);
+            const sellPrice = parseFloat(document.getElementById('gift-sell-price').value);
+
+            const costFor50InUsd = parseFloat(document.getElementById('cost-for-50-usd').value) || 0;
+            const tonUsdtRate = parseFloat(document.getElementById('ton-usdt-rate').value) || 0;
+            const playerokRate = parseFloat(document.getElementById('playerok-rub-usdt').value) || 0;
+
+            const resEl = document.getElementById('gift-result');
+            const costEl = document.getElementById('gift-cost');
+            const beEl = document.getElementById('gift-breakeven');
+            const recEl = document.getElementById('gift-rec');
+
+            if (!starPrice || !quantity || !costFor50InUsd || !tonUsdtRate || !playerokRate) {
+                costEl.innerText = '0 TON';
+                beEl.innerText = '0 ₽';
+                recEl.innerText = '0 ₽';
+                resEl.innerHTML = '<span style="color: #777; font-size: 0.9rem;">Введите данные</span>';
+                return;
+            }
+
+            const totalStars = starPrice * quantity;
+            const costInUsd = (costFor50InUsd / 50) * totalStars;
+            const costInTon = costInUsd / tonUsdtRate;
+            costEl.innerText = `≈ ${costInTon.toFixed(3)} TON`;
+
+            const breakEvenDirtyRub = (costInUsd * playerokRate) / 0.86;
+            beEl.innerText = `${Math.ceil(breakEvenDirtyRub)} ₽`;
+
+            const recDirtyRub = (costInUsd * 1.02 * playerokRate) / 0.86;
+            recEl.innerText = `${Math.ceil(recDirtyRub)} ₽`;
+
+            if (!sellPrice) {
+                resEl.innerHTML = '<span style="color: #777; font-size: 0.9rem;">Введите цену продажи</span>';
+                return;
+            }
+
+            const cleanRub = sellPrice * 0.86;
+            const receivedUsdt = cleanRub / playerokRate;
+            const receivedTon = receivedUsdt / tonUsdtRate;
+            
+            const profitTon = receivedTon - costInTon;
+            const profitPercent = (profitTon / costInTon) * 100;
+
+            let colorClass = profitPercent > 0 ? 'profit-pos' : 'profit-neg';
+            const sign = profitPercent > 0 ? '+' : '';
+
+            if (profitPercent > 0 && (sellPrice - breakEvenDirtyRub) < 2) {
+                colorClass = 'profit-warn';
+            }
+
+            resEl.innerHTML = `
+                <div class="${colorClass}" style="font-size: 1.2rem; font-weight: bold;">
+                    ${sign}${profitPercent.toFixed(1)}%
+                </div>
+            `;
         }
 
         // --- ЛОГИКА NFT С УЧЕТОМ КОМИССИИ И БУСТА ---
@@ -616,7 +866,6 @@
             const sellInput = parseFloat(document.getElementById('nft-sell').value);
             const promoInput = parseFloat(document.getElementById('nft-promo').value) || 0;
 
-            // Сохраняем в кэш
             localStorage.setItem('nftName', nameInput);
             localStorage.setItem('nftBuy', document.getElementById('nft-buy').value);
             localStorage.setItem('nftSell', document.getElementById('nft-sell').value);
@@ -632,18 +881,13 @@
             const tonUsdtRate = parseFloat(document.getElementById('ton-usdt-rate').value) || 0;
             if (!tonUsdtRate || !fetchedUsdRate) return;
 
-            // 1. Считаем себестоимость покупки в рублях
             const extraTonFromUsd = 0.375 / tonUsdtRate;
             const totalCostTon = buyInput + 0.3 + extraTonFromUsd;
             const costRub = totalCostTon * tonUsdtRate * fetchedUsdRate;
 
-            // 2. Считаем выручку (минус 24% Playerok)
             const cleanSellRub = sellInput * 0.76; 
-
-            // 3. Вычитаем буст
             const netRubAfterPromo = cleanSellRub - promoInput;
 
-            // 4. Итоговая чистая прибыль
             const profitRub = netRubAfterPromo - costRub;
             const profitPercent = (profitRub / costRub) * 100;
 
@@ -678,7 +922,6 @@
                 return;
             }
 
-            // Математика та же самая, что и в превью калькулятора
             const extraTonFromUsd = 0.375 / tonUsdtRate;
             const totalCostTon = buyInput + 0.3 + extraTonFromUsd;
             const costRub = totalCostTon * tonUsdtRate * fetchedUsdRate;
@@ -703,12 +946,11 @@
             };
 
             let deals = JSON.parse(localStorage.getItem('deals') || '[]');
-            deals.unshift(deal); // Добавляем в начало массива
+            deals.unshift(deal); 
             localStorage.setItem('deals', JSON.stringify(deals));
 
-            renderDeals(); // Обновляем таблицу
+            renderDeals();
 
-            // Анимация кнопки
             const btn = document.getElementById('save-deal-btn');
             const oldText = btn.innerText;
             btn.innerText = "✅ Успешно сохранено!";
@@ -776,7 +1018,6 @@
                 return;
             }
             
-            // Спец. байт BOM для того чтобы русский язык корректно открывался в Excel
             let csvContent = "\uFEFFДата;Название;Покупка (TON);Продажа (₽);Буст (₽);Чистая прибыль (₽);Профит (%)\n";
             
             deals.forEach(d => {
@@ -837,7 +1078,141 @@
             `;
         }
 
-        // --- УТИЛИТЫ КОНВЕРТАЦИИ ---
+        // --- ЛОГИКА ТАБЛИЦЫ ЗВЕЗД ---
+        function recalcTable() {
+            const costFor50InUsd = parseFloat(document.getElementById('cost-for-50-usd').value) || 0;
+            const tonUsdtRate = parseFloat(document.getElementById('ton-usdt-rate').value) || 0;
+            const playerokRate = parseFloat(document.getElementById('playerok-rub-usdt').value) || 0;
+            
+            let costFor50InTon = 0;
+            if (costFor50InUsd > 0 && tonUsdtRate > 0) {
+                costFor50InTon = costFor50InUsd / tonUsdtRate;
+            }
+            
+            document.getElementById('auto-ton-cost').innerText = `≈ ${costFor50InTon.toFixed(4)} TON`;
+
+            const tbody = document.getElementById('stars-table-body');
+
+            if (!costFor50InUsd || !tonUsdtRate || !playerokRate) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px; color: #aaa;">Введите цены и курсы для расчета</td></tr>';
+                return;
+            }
+
+            if (tbody.children.length === 0 || tbody.children[0].cells.length !== 5) {
+                tbody.innerHTML = `
+                    <tr>
+                        <th style="text-align:center;">Зв.+🎁</th>
+                        <th style="text-align:right;">Закуп (TON)</th>
+                        <th style="text-align:center; color: var(--accent);">Рек. 2%</th>
+                        <th style="text-align:center;">Своя (₽)</th>
+                        <th style="text-align:right;">Профит / БУ</th>
+                    </tr>
+                `;
+                starAmounts.forEach(amount => {
+                    const tr = document.createElement('tr');
+                    tr.id = `row-${amount}`;
+                    tr.innerHTML = `
+                        <td style="text-align:center; padding-top: 5px;">
+                            <div class="col-stars" style="line-height: 1;">${amount}</div>
+                            <input type="number" class="sell-input" id="bonus-${amount}" value="${bonusPrices[amount] || ''}" oninput="calcRowProfit(${amount})" placeholder="+0" style="width: 35px; padding: 2px; font-size: 0.75rem; margin-top: 4px; background: #222; border-color: #555; color: #ff9800;">
+                        </td>
+                        <td class="col-rub" id="buy-${amount}">0 TON</td>
+                        <td style="text-align:center; color: var(--accent); font-weight: bold;" id="rec-${amount}">-</td>
+                        <td style="text-align:center;">
+                            <input type="number" class="sell-input" id="sell-${amount}" value="${sellPrices[amount] || ''}" oninput="calcRowProfit(${amount})" placeholder="...">
+                        </td>
+                        <td style="text-align:right;" id="profit-${amount}">-</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+
+            starAmounts.forEach(amount => {
+                calcRowProfit(amount);
+            });
+        }
+
+        function calcRowProfit(amount) {
+            const costFor50InUsd = parseFloat(document.getElementById('cost-for-50-usd').value) || 0;
+            const tonUsdtRate = parseFloat(document.getElementById('ton-usdt-rate').value) || 0;
+            const playerokRate = parseFloat(document.getElementById('playerok-rub-usdt').value) || 0;
+
+            const bonusInput = document.getElementById(`bonus-${amount}`);
+            const bonusVal = bonusInput ? (parseFloat(bonusInput.value) || 0) : 0;
+            
+            if (bonusInput) {
+                bonusPrices[amount] = bonusInput.value;
+                localStorage.setItem('bonusPrices', JSON.stringify(bonusPrices));
+            }
+
+            const totalStars = amount + bonusVal;
+            let costInTon = 0;
+            
+            if (costFor50InUsd > 0 && tonUsdtRate > 0) {
+                costInTon = (costFor50InUsd / tonUsdtRate) * (totalStars / 50);
+            }
+
+            const buyEl = document.getElementById(`buy-${amount}`);
+            if (buyEl) buyEl.innerHTML = `${costInTon.toFixed(3)} <span style="font-size:0.8rem;font-weight:normal;">TON</span>`;
+
+            const recEl = document.getElementById(`rec-${amount}`);
+            if (recEl && costInTon > 0 && tonUsdtRate > 0 && playerokRate > 0) {
+                const targetDirtyRub = (costInTon * 1.02 * tonUsdtRate * playerokRate) / 0.86;
+                recEl.innerText = Math.ceil(targetDirtyRub) + ' ₽';
+            } else if (recEl) {
+                recEl.innerText = '-';
+            }
+
+            const sellInput = document.getElementById(`sell-${amount}`);
+            if(!sellInput) return;
+            
+            const sellVal = sellInput.value;
+            sellPrices[amount] = sellVal;
+            localStorage.setItem('sellPrices', JSON.stringify(sellPrices)); 
+
+            const profitEl = document.getElementById(`profit-${amount}`);
+            if (!sellVal || costInTon === 0) {
+                profitEl.innerHTML = '-';
+                return;
+            }
+
+            const sellRub = parseFloat(sellVal) || 0;
+            const cleanRub = sellRub * 0.86; 
+            const receivedUsdt = cleanRub / playerokRate; 
+            const receivedTon = receivedUsdt / tonUsdtRate; 
+            
+            const profitTon = receivedTon - costInTon;
+            const profitPercent = (profitTon / costInTon) * 100;
+
+            const breakEvenRate = cleanRub / (costInTon * tonUsdtRate);
+            
+            let margin = breakEvenRate - playerokRate;
+            let colorClass = 'profit-neg'; 
+            let beColor = 'var(--loss)'; 
+            const sign = profitPercent > 0 ? '+' : '';
+
+            if (profitPercent > 0) {
+                if (margin > 2.0) {
+                    colorClass = 'profit-pos';
+                    beColor = 'var(--accent)';
+                } else {
+                    colorClass = 'profit-warn';
+                    beColor = 'var(--warn)';
+                }
+            }
+
+            let breakEvenHtml = '';
+            if (breakEvenRate > 0 && isFinite(breakEvenRate)) {
+                breakEvenHtml = `<div style="font-size: 0.8rem; color: ${beColor}; margin-top: 4px; line-height: 1;">Б/У: ${breakEvenRate.toFixed(2)}₽</div>`;
+            }
+
+            profitEl.innerHTML = `
+                <div class="${colorClass}">${sign}${profitPercent.toFixed(1)}%</div>
+                ${breakEvenHtml}
+            `;
+        }
+
+        // --- УТИЛИТЫ КОНВЕРТАЦИИ И КАЛЬКУЛЯТОРА ---
         function toggleUsdMode() {
             modeUsdReversed = !modeUsdReversed;
             const title = document.getElementById('usd-title');
@@ -863,8 +1238,52 @@
             }
         }
 
-        function recalcTable() {
-           // Твоя функция перерасчета таблицы звезд
+        function calcTax() {
+            const val = parseFloat(document.getElementById('tax-input').value) || 0;
+            document.getElementById('tax-14').innerText = (val * 0.86).toFixed(2);
+            document.getElementById('tax-13').innerText = (val * 0.87).toFixed(2);
+            document.getElementById('tax-10').innerText = (val * 0.90).toFixed(2);
+            document.getElementById('tax-5').innerText = (val * 0.95).toFixed(2);
+        }
+
+        function calcDiff() {
+            const a = parseFloat(document.getElementById('diff-a').value);
+            const b = parseFloat(document.getElementById('diff-b').value);
+            if (a && b) {
+                const diff = ((b - a) / a) * 100;
+                const sign = diff > 0 ? "+" : "";
+                const el = document.getElementById('diff-result');
+                el.innerText = sign + diff.toFixed(2) + '%';
+                el.style.color = diff >= 0 ? 'var(--accent)' : 'var(--loss)';
+            } else {
+                document.getElementById('diff-result').innerText = '0%';
+            }
+        }
+
+        function calcTrade() {
+            const buy = parseFloat(document.getElementById('trade-buy').value);
+            const sell = parseFloat(document.getElementById('trade-sell').value);
+
+            const doCalc = (commission, idSuffix) => {
+                if (!buy || !sell) {
+                    document.getElementById(`trade-clean-${idSuffix}`).innerText = '0';
+                    document.getElementById(`trade-result-${idSuffix}`).innerText = '0%';
+                    return;
+                }
+                const factor = 1 - (commission / 100);
+                const clean = sell * factor;
+                const profit = clean - buy;
+                const percent = (profit / buy) * 100;
+
+                document.getElementById(`trade-clean-${idSuffix}`).innerText = clean.toFixed(2);
+                const el = document.getElementById(`trade-result-${idSuffix}`);
+                el.innerText = (percent > 0 ? "+" : "") + percent.toFixed(2) + '%';
+                el.style.color = percent >= 0 ? 'var(--accent)' : 'var(--loss)';
+            };
+
+            doCalc(2, '2');
+            doCalc(5, '5');
+            doCalc(13, '13');
         }
 
         let calcExpression = '';
