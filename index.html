@@ -529,6 +529,38 @@
             </div>
         </div>
 
+        <div class="card" style="border-color: #e91e63;">
+            <div class="card-header" style="color: #e91e63;">
+                🔄 Арбитраж: Playerok ➔ Fragment
+            </div>
+            
+            <div class="input-group">
+                <label>Покупка подарка на Playerok (₽)</label>
+                <input type="number" id="arb-buy-rub" placeholder="За сколько взял..." oninput="calcArbitrage()">
+            </div>
+            <div class="input-group">
+                <label>Продажа на Fragment (TON)</label>
+                <input type="number" id="arb-sell-ton" placeholder="За сколько продаешь..." oninput="calcArbitrage()">
+            </div>
+            
+            <div class="result-row" style="margin-top: 15px; flex-direction: column; align-items: flex-start; gap: 8px;">
+                <div style="display: flex; justify-content: space-between; width: 100%; font-size: 0.9rem;">
+                    <span style="color: #aaa;">Себестоимость (+25★):</span>
+                    <span id="arb-total-cost" style="color: #fff;">0 ₽</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; width: 100%; font-size: 0.9rem;">
+                    <span style="color: #aaa;">На руки в USDT (-0.5%):</span>
+                    <span id="arb-net-usdt" style="color: var(--accent);">0 USDT</span>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; align-items: flex-end; width: 100%; margin-top: 5px; padding-top: 10px; border-top: 1px dashed #444;">
+                    <span>Чистый выхлоп (₽):</span>
+                    <div style="text-align: right;" id="arb-result">
+                        <span style="color: #777; font-size: 0.9rem;">Введите данные</span>
+                    </div>
+                </div>
+            </div>
+        </div>
         <div class="card">
             <div class="card-header">
                 <div class="header-title-group">
@@ -741,6 +773,10 @@
             document.getElementById('po-buy-ton').value = localStorage.getItem('poBuyTon') || '';
             document.getElementById('po-sell-rub').value = localStorage.getItem('poSellRub') || '';
 
+            // Восстановление арбитража
+            document.getElementById('arb-buy-rub').value = localStorage.getItem('arbBuyRub') || '';
+            document.getElementById('arb-sell-ton').value = localStorage.getItem('arbSellTon') || '';
+
             renderDeals();
         }
 
@@ -754,6 +790,7 @@
             calcGiftPack();
             calcNFT(); 
             calcPlayerok();
+            calcArbitrage(); // Вызов пересчета арбитража
         }
 
         async function fetchRates() {
@@ -763,6 +800,7 @@
                 fetchedUsdRate = usdData.usd.rub;
                 document.getElementById('usd-rate-badge').innerText = `1$ = ${fetchedUsdRate.toFixed(2)}₽`;
                 calcUsd();
+                calcArbitrage(); // Обновляем арбитраж при получении курса доллара
             } catch (e) { console.error(e); }
 
             try {
@@ -773,6 +811,58 @@
                 document.getElementById('ton-usdt-rate').value = fetchedTonUsdt; 
                 saveAndRecalc();
             } catch (e) { console.error(e); }
+        }
+
+        // --- ЛОГИКА АРБИТРАЖА (Playerok -> Fragment) ---
+        function calcArbitrage() {
+            const buyRub = parseFloat(document.getElementById('arb-buy-rub').value);
+            const sellTon = parseFloat(document.getElementById('arb-sell-ton').value);
+            const costFor50InUsd = parseFloat(document.getElementById('cost-for-50-usd').value) || 0;
+            const tonUsdtRate = parseFloat(document.getElementById('ton-usdt-rate').value) || 0;
+            const usdToRub = fetchedUsdRate || 0;
+
+            if (document.getElementById('arb-buy-rub')) {
+                localStorage.setItem('arbBuyRub', document.getElementById('arb-buy-rub').value);
+            }
+            if (document.getElementById('arb-sell-ton')) {
+                localStorage.setItem('arbSellTon', document.getElementById('arb-sell-ton').value);
+            }
+
+            const resEl = document.getElementById('arb-result');
+            const costEl = document.getElementById('arb-total-cost');
+            const netUsdtEl = document.getElementById('arb-net-usdt');
+
+            if (!buyRub || !sellTon || !tonUsdtRate || !usdToRub || !costFor50InUsd) {
+                costEl.innerText = '0 ₽';
+                netUsdtEl.innerText = '0 USDT';
+                resEl.innerHTML = '<span style="color: #777; font-size: 0.9rem;">Введите данные</span>';
+                return;
+            }
+
+            const cost25StarsUsd = costFor50InUsd / 2;
+            const cost25StarsRub = cost25StarsUsd * usdToRub;
+            const totalCostRub = buyRub + cost25StarsRub;
+            costEl.innerText = `≈ ${totalCostRub.toFixed(2)} ₽`;
+
+            const netTon = sellTon * 0.995; 
+            const netUsdt = netTon * tonUsdtRate;
+            netUsdtEl.innerText = `≈ ${netUsdt.toFixed(2)} USDT`;
+
+            const netRub = netUsdt * usdToRub; 
+            const profitRub = netRub - totalCostRub;
+            const profitPercent = (profitRub / totalCostRub) * 100;
+
+            const colorClass = profitPercent > 0 ? 'profit-pos' : 'profit-neg';
+            const sign = profitPercent > 0 ? '+' : '';
+
+            resEl.innerHTML = `
+                <div style="font-size: 1.1rem; font-weight: bold; margin-bottom: 2px;" class="${colorClass}">
+                    ${sign}${profitRub.toFixed(2)} ₽
+                </div>
+                <div class="${colorClass}" style="font-size: 0.95rem;">
+                    (${sign}${profitPercent.toFixed(1)}%)
+                </div>
+            `;
         }
 
         // --- ЛОГИКА КАСТОМНЫХ ЗВЕЗД ---
