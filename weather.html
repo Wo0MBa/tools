@@ -5,37 +5,43 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Погодный Трекер Polymarket</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body { background-color: #f3f4f6; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
         .glass-panel { background: white; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); padding: 20px; margin-bottom: 20px; }
     </style>
 </head>
-<body class="p-4 md:p-8 max-w-4xl mx-auto">
-    <h1 class="text-3xl font-bold text-gray-800 mb-6">🌤 Погодный Трекер</h1>
+<body class="p-4 md:p-8 max-w-5xl mx-auto">
+    <h1 class="text-3xl font-bold text-gray-800 mb-6">🌤 Погодный Трекер Polymarket</h1>
 
     <!-- Форма ввода -->
     <div class="glass-panel">
         <h2 class="text-xl font-semibold mb-4">Добавить сделку</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
+        <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            <div class="lg:col-span-2">
                 <label class="block text-sm font-medium text-gray-700">Город</label>
-                <input type="text" id="cityInput" placeholder="Например: Guangzhou" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border">
+                <input type="text" id="cityInput" placeholder="Например: Paris" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border">
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700">Инвестировано ($)</label>
+                <label class="block text-sm font-medium text-gray-700">Дата (ДД.ММ)</label>
+                <input type="text" id="dateInput" placeholder="Например: 01.07" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Shares</label>
+                <input type="number" id="sharesInput" placeholder="Кол-во" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Инвест ($)</label>
                 <input type="number" id="investInput" step="0.01" value="2.00" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border">
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700">Профит (Плюс в $)</label>
-                <input type="number" id="profitInput" step="0.01" placeholder="Если плюс" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm p-2 border">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700">Убыток (Минус в $)</label>
-                <input type="number" id="lossInput" step="0.01" placeholder="Если минус" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm p-2 border">
+                <label class="block text-sm font-medium text-gray-700">Результат ($)</label>
+                <input type="number" id="resultInput" step="0.01" placeholder="+Плюс / -Минус" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border">
             </div>
         </div>
-        <button onclick="addTrade()" class="mt-4 w-full bg-indigo-600 text-white font-bold py-2 px-4 rounded hover:bg-indigo-700 transition">Сохранить сделку</button>
+        <div class="mt-4 flex gap-4">
+            <button onclick="addTrade(true)" class="w-1/2 bg-green-500 text-white font-bold py-2 px-4 rounded hover:bg-green-600 transition">В ПЛЮС</button>
+            <button onclick="addTrade(false)" class="w-1/2 bg-red-500 text-white font-bold py-2 px-4 rounded hover:bg-red-600 transition">В МИНУС</button>
+        </div>
     </div>
 
     <!-- Общая статистика -->
@@ -54,22 +60,59 @@
         </div>
     </div>
 
-    <!-- Таблица по городам -->
-    <div class="glass-panel overflow-x-auto">
-        <h2 class="text-xl font-semibold mb-4">Статистика по городам</h2>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Таблица по городам -->
+        <div class="glass-panel overflow-x-auto">
+            <h2 class="text-xl font-semibold mb-4">Статистика по городам</h2>
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Город</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Сделок</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Винрейт</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">ROI</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Profit ($)</th>
+                    </tr>
+                </thead>
+                <tbody id="cityTableBody" class="bg-white divide-y divide-gray-200"></tbody>
+            </table>
+        </div>
+
+        <!-- Таблица по дням -->
+        <div class="glass-panel overflow-x-auto">
+            <h2 class="text-xl font-semibold mb-4">Профит по дням</h2>
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Дата</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Сделок</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Винрейт</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Net Profit ($)</th>
+                    </tr>
+                </thead>
+                <tbody id="daysTableBody" class="bg-white divide-y divide-gray-200"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- История последних сделок -->
+    <div class="glass-panel overflow-x-auto mt-6">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-semibold">История сделок (последние 50)</h2>
+            <button onclick="exportData()" class="text-sm text-indigo-600 hover:text-indigo-800 font-medium">Экспорт JSON</button>
+        </div>
         <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
                 <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Город</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Сделок</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Винрейт</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ROI</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Profit ($)</th>
+                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Дата</th>
+                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Город</th>
+                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Shares</th>
+                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Инвест</th>
+                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Результат</th>
+                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Действие</th>
                 </tr>
             </thead>
-            <tbody id="cityTableBody" class="bg-white divide-y divide-gray-200">
-                <!-- Data will be injected here -->
-            </tbody>
+            <tbody id="historyTableBody" class="bg-white divide-y divide-gray-200"></tbody>
         </table>
     </div>
 
@@ -79,35 +122,76 @@
         <button onclick="clearData()" class="text-red-500 underline mt-2">Очистить всю историю</button>
     </div>
 
+    <!-- Загрузка первоначальных данных, если нужно будет -->
+    <script id="initialData"></script>
+
     <script>
-        let trades = JSON.parse(localStorage.getItem('weatherTrades')) || [];
+        let trades = JSON.parse(localStorage.getItem('weatherTradesV2')) || [];
+        
+        // Автоматически подставляем сегодняшнюю дату при загрузке
+        const today = new Date();
+        const dd = String(today.getDate()).padStart(2, '0');
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        document.getElementById('dateInput').value = `${dd}.${mm}`;
 
-        function addTrade() {
+        function addTrade(isWin) {
             const city = document.getElementById('cityInput').value.trim();
+            const date = document.getElementById('dateInput').value.trim();
+            const shares = parseFloat(document.getElementById('sharesInput').value) || 0;
             const invest = parseFloat(document.getElementById('investInput').value) || 0;
-            const profit = parseFloat(document.getElementById('profitInput').value) || 0;
-            const loss = parseFloat(document.getElementById('lossInput').value) || 0;
+            const resultVal = parseFloat(document.getElementById('resultInput').value) || 0;
 
-            if (!city || invest <= 0 || (profit === 0 && loss === 0)) {
-                alert("Заполните город, инвестиции и профит ИЛИ убыток!");
+            if (!city || invest <= 0 || resultVal === 0 || !date) {
+                alert("Заполните Город, Дату, Инвестиции и Результат!");
                 return;
             }
 
-            trades.push({ city, invest, profit, loss, date: new Date().toISOString() });
-            localStorage.setItem('weatherTrades', JSON.stringify(trades));
+            const profit = isWin ? resultVal : 0;
+            const loss = !isWin ? resultVal : 0;
+
+            trades.push({ 
+                id: Date.now(),
+                city, 
+                date,
+                shares,
+                invest, 
+                profit, 
+                loss,
+                timestamp: new Date().toISOString() 
+            });
             
-            document.getElementById('profitInput').value = '';
-            document.getElementById('lossInput').value = '';
+            saveAndRender();
             
-            renderStats();
+            document.getElementById('sharesInput').value = '';
+            document.getElementById('resultInput').value = '';
+            document.getElementById('cityInput').focus();
+        }
+
+        function deleteTrade(id) {
+            if(confirm("Удалить эту сделку?")) {
+                trades = trades.filter(t => t.id !== id);
+                saveAndRender();
+            }
         }
 
         function clearData() {
-            if(confirm("Точно удалить все данные?")) {
+            if(confirm("Точно удалить все данные? Это действие необратимо!")) {
                 trades = [];
-                localStorage.setItem('weatherTrades', JSON.stringify(trades));
-                renderStats();
+                saveAndRender();
             }
+        }
+
+        function exportData() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(trades));
+            const dlAnchorElem = document.createElement('a');
+            dlAnchorElem.setAttribute("href", dataStr);
+            dlAnchorElem.setAttribute("download", "weather_trades_export.json");
+            dlAnchorElem.click();
+        }
+
+        function saveAndRender() {
+            localStorage.setItem('weatherTradesV2', JSON.stringify(trades));
+            renderStats();
         }
 
         function renderStats() {
@@ -116,6 +200,8 @@
                 document.getElementById('totalProfit').innerText = "0.00";
                 document.getElementById('totalROI').innerText = "0%";
                 document.getElementById('cityTableBody').innerHTML = "";
+                document.getElementById('daysTableBody').innerHTML = "";
+                document.getElementById('historyTableBody').innerHTML = "";
                 return;
             }
 
@@ -123,12 +209,14 @@
             let totalProfit = 0;
             let totalLoss = 0;
             let cityStats = {};
+            let dayStats = {};
 
             trades.forEach(t => {
                 totalInvest += t.invest;
                 totalProfit += t.profit;
                 totalLoss += t.loss;
 
+                // Stats by City
                 if (!cityStats[t.city]) {
                     cityStats[t.city] = { trades: 0, wins: 0, invest: 0, profit: 0, loss: 0 };
                 }
@@ -137,41 +225,86 @@
                 cityStats[t.city].profit += t.profit;
                 cityStats[t.city].loss += t.loss;
                 if (t.profit > 0) cityStats[t.city].wins += 1;
+
+                // Stats by Day
+                if (!dayStats[t.date]) {
+                    dayStats[t.date] = { trades: 0, wins: 0, profit: 0, loss: 0 };
+                }
+                dayStats[t.date].trades += 1;
+                dayStats[t.date].profit += t.profit;
+                dayStats[t.date].loss += t.loss;
+                if (t.profit > 0) dayStats[t.date].wins += 1;
             });
 
             let netProfit = totalProfit - totalLoss;
             let roi = totalInvest > 0 ? (netProfit / totalInvest) * 100 : 0;
 
             document.getElementById('totalTrades').innerText = trades.length;
-            document.getElementById('totalProfit').innerText = netProfit.toFixed(2);
+            document.getElementById('totalProfit').innerText = (netProfit > 0 ? "+" : "") + netProfit.toFixed(2);
             document.getElementById('totalProfit').className = netProfit >= 0 ? "text-3xl font-bold text-green-600" : "text-3xl font-bold text-red-600";
-            document.getElementById('totalROI').innerText = roi.toFixed(1) + "%";
+            document.getElementById('totalROI').innerText = (roi > 0 ? "+" : "") + roi.toFixed(1) + "%";
             document.getElementById('totalROI').className = roi >= 0 ? "text-3xl font-bold text-green-600" : "text-3xl font-bold text-red-600";
 
-            let tbody = "";
+            // Render City Table
+            let cityTbody = "";
             let sortedCities = Object.keys(cityStats).sort((a,b) => (cityStats[b].profit - cityStats[b].loss) - (cityStats[a].profit - cityStats[a].loss));
-
+            
             sortedCities.forEach(city => {
                 let st = cityStats[city];
                 let cNet = st.profit - st.loss;
                 let cRoi = st.invest > 0 ? (cNet / st.invest) * 100 : 0;
                 let cWinrate = (st.wins / st.trades) * 100;
-                
                 let roiColor = cRoi >= 0 ? "text-green-600" : "text-red-600";
                 
-                tbody += `<tr>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${city}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${st.trades}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${cWinrate.toFixed(0)}%</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-bold ${roiColor}">${cRoi.toFixed(1)}%</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-bold ${roiColor}">${cNet.toFixed(2)}</td>
+                cityTbody += `<tr>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">${city}</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${st.trades}</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${cWinrate.toFixed(0)}%</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm font-bold ${roiColor}">${(cRoi>0?"+":"") + cRoi.toFixed(1)}%</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm font-bold ${roiColor}">${(cNet>0?"+":"") + cNet.toFixed(2)}</td>
                 </tr>`;
             });
+            document.getElementById('cityTableBody').innerHTML = cityTbody;
 
-            document.getElementById('cityTableBody').innerHTML = tbody;
+            // Render Days Table
+            let daysTbody = "";
+            // Sort dates descending (simple string sort works for DD.MM if same year, but better parse if needed. For now simple sort)
+            let sortedDays = Object.keys(dayStats).sort().reverse();
+            
+            sortedDays.forEach(day => {
+                let st = dayStats[day];
+                let dNet = st.profit - st.loss;
+                let dWinrate = (st.wins / st.trades) * 100;
+                let color = dNet >= 0 ? "text-green-600" : "text-red-600";
+                
+                daysTbody += `<tr>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">${day}</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${st.trades}</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${dWinrate.toFixed(0)}%</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm font-bold ${color}">${(dNet>0?"+":"") + dNet.toFixed(2)}</td>
+                </tr>`;
+            });
+            document.getElementById('daysTableBody').innerHTML = daysTbody;
+
+            // Render History Table
+            let histTbody = "";
+            let historyTrades = [...trades].reverse().slice(0, 50); // Last 50
+            historyTrades.forEach(t => {
+                let resStr = t.profit > 0 ? `<span class="text-green-600 font-bold">+${t.profit.toFixed(2)}$</span>` : `<span class="text-red-600 font-bold">-${t.loss.toFixed(2)}$</span>`;
+                let shStr = t.shares ? `${t.shares}c` : '-';
+                
+                histTbody += `<tr>
+                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-500">${t.date}</td>
+                    <td class="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900">${t.city}</td>
+                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-500">${shStr}</td>
+                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-500">$${t.invest.toFixed(2)}</td>
+                    <td class="px-4 py-2 whitespace-nowrap text-sm">${resStr}</td>
+                    <td class="px-4 py-2 whitespace-nowrap text-sm"><button onclick="deleteTrade(${t.id})" class="text-red-500 hover:text-red-700">Удалить</button></td>
+                </tr>`;
+            });
+            document.getElementById('historyTableBody').innerHTML = histTbody;
         }
 
-        // Initial render
         renderStats();
     </script>
 </body>
