@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Погодный Трекер Polymarket</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { background-color: #f3f4f6; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        .glass-panel { background: white; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); padding: 20px; margin-bottom: 20px; }
+    </style>
+</head>
+<body class="p-4 md:p-8 max-w-4xl mx-auto">
+    <h1 class="text-3xl font-bold text-gray-800 mb-6">🌤 Погодный Трекер</h1>
+
+    <!-- Форма ввода -->
+    <div class="glass-panel">
+        <h2 class="text-xl font-semibold mb-4">Добавить сделку</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Город</label>
+                <input type="text" id="cityInput" placeholder="Например: Guangzhou" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Инвестировано ($)</label>
+                <input type="number" id="investInput" step="0.01" value="2.00" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Профит (Плюс в $)</label>
+                <input type="number" id="profitInput" step="0.01" placeholder="Если плюс" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm p-2 border">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Убыток (Минус в $)</label>
+                <input type="number" id="lossInput" step="0.01" placeholder="Если минус" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm p-2 border">
+            </div>
+        </div>
+        <button onclick="addTrade()" class="mt-4 w-full bg-indigo-600 text-white font-bold py-2 px-4 rounded hover:bg-indigo-700 transition">Сохранить сделку</button>
+    </div>
+
+    <!-- Общая статистика -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div class="glass-panel text-center">
+            <div class="text-sm text-gray-500">Всего сделок</div>
+            <div id="totalTrades" class="text-3xl font-bold text-gray-800">0</div>
+        </div>
+        <div class="glass-panel text-center">
+            <div class="text-sm text-gray-500">Net Profit ($)</div>
+            <div id="totalProfit" class="text-3xl font-bold text-indigo-600">0.00</div>
+        </div>
+        <div class="glass-panel text-center">
+            <div class="text-sm text-gray-500">Общий ROI</div>
+            <div id="totalROI" class="text-3xl font-bold text-green-600">0%</div>
+        </div>
+    </div>
+
+    <!-- Таблица по городам -->
+    <div class="glass-panel overflow-x-auto">
+        <h2 class="text-xl font-semibold mb-4">Статистика по городам</h2>
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Город</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Сделок</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Винрейт</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ROI</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Profit ($)</th>
+                </tr>
+            </thead>
+            <tbody id="cityTableBody" class="bg-white divide-y divide-gray-200">
+                <!-- Data will be injected here -->
+            </tbody>
+        </table>
+    </div>
+
+    <div class="text-center text-sm text-gray-400 mt-8 mb-4">
+        Данные сохраняются локально в вашем браузере.
+        <br>
+        <button onclick="clearData()" class="text-red-500 underline mt-2">Очистить всю историю</button>
+    </div>
+
+    <script>
+        let trades = JSON.parse(localStorage.getItem('weatherTrades')) || [];
+
+        function addTrade() {
+            const city = document.getElementById('cityInput').value.trim();
+            const invest = parseFloat(document.getElementById('investInput').value) || 0;
+            const profit = parseFloat(document.getElementById('profitInput').value) || 0;
+            const loss = parseFloat(document.getElementById('lossInput').value) || 0;
+
+            if (!city || invest <= 0 || (profit === 0 && loss === 0)) {
+                alert("Заполните город, инвестиции и профит ИЛИ убыток!");
+                return;
+            }
+
+            trades.push({ city, invest, profit, loss, date: new Date().toISOString() });
+            localStorage.setItem('weatherTrades', JSON.stringify(trades));
+            
+            document.getElementById('profitInput').value = '';
+            document.getElementById('lossInput').value = '';
+            
+            renderStats();
+        }
+
+        function clearData() {
+            if(confirm("Точно удалить все данные?")) {
+                trades = [];
+                localStorage.setItem('weatherTrades', JSON.stringify(trades));
+                renderStats();
+            }
+        }
+
+        function renderStats() {
+            if (trades.length === 0) {
+                document.getElementById('totalTrades').innerText = "0";
+                document.getElementById('totalProfit').innerText = "0.00";
+                document.getElementById('totalROI').innerText = "0%";
+                document.getElementById('cityTableBody').innerHTML = "";
+                return;
+            }
+
+            let totalInvest = 0;
+            let totalProfit = 0;
+            let totalLoss = 0;
+            let cityStats = {};
+
+            trades.forEach(t => {
+                totalInvest += t.invest;
+                totalProfit += t.profit;
+                totalLoss += t.loss;
+
+                if (!cityStats[t.city]) {
+                    cityStats[t.city] = { trades: 0, wins: 0, invest: 0, profit: 0, loss: 0 };
+                }
+                cityStats[t.city].trades += 1;
+                cityStats[t.city].invest += t.invest;
+                cityStats[t.city].profit += t.profit;
+                cityStats[t.city].loss += t.loss;
+                if (t.profit > 0) cityStats[t.city].wins += 1;
+            });
+
+            let netProfit = totalProfit - totalLoss;
+            let roi = totalInvest > 0 ? (netProfit / totalInvest) * 100 : 0;
+
+            document.getElementById('totalTrades').innerText = trades.length;
+            document.getElementById('totalProfit').innerText = netProfit.toFixed(2);
+            document.getElementById('totalProfit').className = netProfit >= 0 ? "text-3xl font-bold text-green-600" : "text-3xl font-bold text-red-600";
+            document.getElementById('totalROI').innerText = roi.toFixed(1) + "%";
+            document.getElementById('totalROI').className = roi >= 0 ? "text-3xl font-bold text-green-600" : "text-3xl font-bold text-red-600";
+
+            let tbody = "";
+            let sortedCities = Object.keys(cityStats).sort((a,b) => (cityStats[b].profit - cityStats[b].loss) - (cityStats[a].profit - cityStats[a].loss));
+
+            sortedCities.forEach(city => {
+                let st = cityStats[city];
+                let cNet = st.profit - st.loss;
+                let cRoi = st.invest > 0 ? (cNet / st.invest) * 100 : 0;
+                let cWinrate = (st.wins / st.trades) * 100;
+                
+                let roiColor = cRoi >= 0 ? "text-green-600" : "text-red-600";
+                
+                tbody += `<tr>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${city}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${st.trades}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${cWinrate.toFixed(0)}%</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-bold ${roiColor}">${cRoi.toFixed(1)}%</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-bold ${roiColor}">${cNet.toFixed(2)}</td>
+                </tr>`;
+            });
+
+            document.getElementById('cityTableBody').innerHTML = tbody;
+        }
+
+        // Initial render
+        renderStats();
+    </script>
+</body>
+</html>
